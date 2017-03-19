@@ -5,30 +5,7 @@
 #include "myClient.h"
 #include "SafeContainer.h"
 
-/**
-接收从客户端来的数据
-*/
-class CxTcpDelegateClient : public CxTcpDelegate
-{
-public:
-	virtual void OnTcpSend(CxTcpClient* sender, const char* buf, int size);
-	virtual void OnTcpRecv(CxTcpClient* sender, const char* buf, int size);
-	virtual void OnTcpClose(CxTcpClient* sender) {};
-	virtual void OnTcpOpen(CxTcpClient* sender) {};
-};
 
-
-/**
-接收从被代理的服务器传来的数据
-*/
-class CxTcpDelegateProxy : public CxTcpDelegate
-{
-public:
-	virtual void OnTcpSend(CxTcpClient* sender, const char* buf, int size) {  };
-	virtual void OnTcpRecv(CxTcpClient* sender, const char* buf, int size) {  };
-	virtual void OnTcpClose(CxTcpClient* sender) {};
-	virtual void OnTcpOpen(CxTcpClient* sender) {};
-};
 
 
 /**
@@ -39,10 +16,26 @@ class CxTcpClientProxy : public CxTcpClient
 public:
 	CxTcpClientProxy();
 
+public:
+	virtual int Open(sockaddr_in _addr);
+	virtual void Close();
 
 public:
-	//CxSafeMap<int64, CxTcpClient*> clients;
-	CxTcpClient* client;
+	static void connect_cb(uv_connect_t* req, int status);
+	static void write_cb(uv_write_t* req, int status);
+	static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
+	static void shutdown_cb(uv_shutdown_t* req, int status);
+	static void close_cb(uv_handle_t* handle);
+	static void alloc_cb(uv_handle_t* handle,
+		size_t suggested_size,
+		uv_buf_t* buf);
+
+public:
+	CxTcpClient* cli;
+
+	//用来连接
+	uv_tcp_t client;
+	uv_os_sock_t sock;
 
 };
 
@@ -50,7 +43,7 @@ public:
 /**
 
 */
-class CxMyProxy : public Singleton<CxMyProxy>,public CxTcpDelegateProxy
+class CxMyProxy : public Singleton<CxMyProxy>,public CxTcpDelegate
 {
 public:
 	CxMyProxy();

@@ -10,10 +10,11 @@ static const char* X_APP_VERSION = "GXPROXY 2017-03-19";
 struct sx_cmd_t mycmds[]=
 {
 	{"client",mycmd_client_list,1,1,"client list"},
+	{ "@!PROXY",mycmd_client_proxy,1,1,"PROXY <IP> <PORT>" },
 	{ "@!VER",mycmd_system_helo,0,0,"VER" },
 };
 
-unsigned int mycmds_count=2;
+unsigned int mycmds_count=3;
 
 int mycmd_client_list(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
 {

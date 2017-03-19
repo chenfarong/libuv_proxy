@@ -361,8 +361,8 @@ string XStringList::operator[](size_t idx)
 		if (idx > 0) _s = lines[idx - 1];
 		size_t _e= lines[idx];
         res=m_dat.substr(_s,_e-_s);
-		if (m_xendl) {
-			std::string::size_type pos = res.find(m_xendl);
+		if (m_xendl && strlen(m_xendl)>0) {
+			int pos = res.find(m_xendl);
 			if (pos != std::string::npos) {
 				res.erase(pos);
 			}

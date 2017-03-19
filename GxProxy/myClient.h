@@ -122,14 +122,7 @@ public:
 	virtual int DoCmd(const char* buf, unsigned int size);
 
 public:
-	static void connect_cb(uv_connect_t* req, int status);
-	static void write_cb(uv_write_t* req, int status);
-	static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
-	static void shutdown_cb(uv_shutdown_t* req, int status);
-	static void close_cb(uv_handle_t* handle);
-	static void alloc_cb(uv_handle_t* handle,
-		size_t suggested_size,
-		uv_buf_t* buf);
+
 
 protected:
 
@@ -149,9 +142,7 @@ public:
 	uv_tcp_t* handle;
 	CxTcpClient* m_proxy;	//和哪个代理链接
 	
-	//用来连接
-	uv_tcp_t client;
-	uv_os_sock_t sock;
+
 
 };
 

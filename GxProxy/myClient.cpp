@@ -10,6 +10,7 @@
 #include "GxProxy.h"
 #include "XNetBuffer.h"
 #include "XString/XString.h"
+#include "XLog.h"
 
 X_IMPL_SINSTANCE(CxMyClientPool)
 
@@ -31,46 +32,11 @@ void CxMyClient::Reset()
 }
 
 
-static uv_os_sock_t create_tcp_socket(void) {
-	uv_os_sock_t sock;
-
-	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-#ifdef _WIN32
-	XX_ASSERT(sock != INVALID_SOCKET);
-#else
-	XX_ASSERT(sock >= 0);
-#endif
-
-#ifndef _WIN32
-	{
-		/* Allow reuse of the port. */
-		int yes = 1;
-		int r = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof yes);
-		XX_ASSERT(r == 0);
-	}
-#endif
-
-	return sock;
-}
 
 
 int CxMyClient::Open(sockaddr_in _addr)
 {
-	uv_connect_t* connect_req=(uv_connect_t*)malloc(sizeof(uv_connect_t));
-	//uv_tcp_connect()
-	sock = create_tcp_socket();
 
-	int r = uv_tcp_init(uv_default_loop(), &client);
-	XX_ASSERT(r == 0);
-
-	r = uv_tcp_open(&client, sock);
-	XX_ASSERT(r == 0);
-
-	r = uv_tcp_connect(connect_req,
-		&client,
-		(const struct sockaddr*) &_addr,
-		CxMyClient::connect_cb);
-	XX_ASSERT(r == 0);
 	return 0;
 }
 
@@ -278,13 +244,20 @@ void CxTcpClient::SetDelegate(CxTcpDelegate* _delegate)
 
 int CxMyClient::DoCmd(const char* buf, unsigned int size)
 {
-	XTokenizer tok;
-	tok.ParseEx2(buf, size, " \r\n");
+	if (size < 3) return 0;
 
+	if (buf[0] != '@') return 0;
+	if (buf[1] != '!') return 0;
+
+	XTokenizer tok(buf,size);
+	std::string cmd = tok.GetValueStringByIndex(0);
+//	tok.ParseEx2(buf, size, " \r\n");
+	XLOG_WARN("cmd:%s", cmd.c_str());
 	for (unsigned int i = 0; i < mycmds_count; i++)
 	{
 		//const char* _str_first; //FIXME
-		if (tok.FirstTokenIs(mycmds[i].cmd))
+		XLOG_INFO("cmd:%s", mycmds[i].cmd);
+		if (0== cmd.compare(mycmds[i].cmd))
 		{
 			(mycmds[i].proc)(this, buf, size,&tok);
 		}
@@ -292,32 +265,3 @@ int CxMyClient::DoCmd(const char* buf, unsigned int size)
 	return 0;
 }
 
-void CxMyClient::connect_cb(uv_connect_t* req, int status)
-{
-
-}
-
-void CxMyClient::write_cb(uv_write_t* req, int status)
-{
-
-}
-
-void CxMyClient::alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
-{
-
-}
-
-void CxMyClient::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
-{
-
-}
-
-void CxMyClient::shutdown_cb(uv_shutdown_t* req, int status)
-{
-
-}
-
-void CxMyClient::close_cb(uv_handle_t* handle)
-{
-
-}
