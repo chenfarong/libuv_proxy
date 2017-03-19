@@ -30,7 +30,7 @@ typedef struct {
 
 
 
-class CxTcpRecvDelegate
+class CxTcpDelegate
 {
 public:
 	virtual void OnTcpSend(CxTcpClient* sender, const char* buf, int size) {  };
@@ -42,10 +42,13 @@ public:
 class CxTcpClient
 {
 public:
+
+
+public:
 	CxTcpClient();
 
-	int Open(sockaddr_in _addr);
-	void Close();
+	virtual int Open(sockaddr_in _addr);
+	virtual void Close();
 
 	virtual int Send(const char* buf, int size);
 	int SendPto(const char* buf, int size);
@@ -57,11 +60,14 @@ public:
 
 	virtual int DoCmd(const char* buf, unsigned int size) { return 0; };
 
+	void SetDelegate(CxTcpDelegate* _delegate);
+
 protected:
-	CxTcpRecvDelegate* m_delegate;
+	CxTcpDelegate* m_delegate;
 	int64 m_socket;
 	CxNetBuffer m_input;
 
+	//0 前面加32的长度 1后面加结束符
 	int pto_type;
 
 public:
@@ -78,7 +84,7 @@ private:
 };
 
 
-class CxMyClient : public CxTcpClient,public CxTcpRecvDelegate
+class CxMyClient : public CxTcpClient,public CxTcpDelegate
 {
 public:
 	enum CLI_STATE
@@ -91,6 +97,9 @@ public:
 public:
 	CxMyClient();
 	void Reset();
+
+	virtual int Open(sockaddr_in _addr);
+	virtual void Close();
 
 	void Accept();
 
@@ -114,8 +123,6 @@ public:
 
 protected:
 
-	
-
 	int m_nState;
 
 	sockaddr_in m_addr;
@@ -124,8 +131,7 @@ protected:
 	std::string m_sCryptoKey;
 
 
-
-	CxTcpClient* m_cur_proxy;	//和哪个代理链接
+	CxTcpClient* m_proxy;	//和哪个代理链接
 
 	int m_iPrivilege;  //权限
 
@@ -135,7 +141,13 @@ public:
 };
 
 #pragma mark - 
+//////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////
 
+/**
+管理客户端连接
+*/
 class CxMyClientPool : public Singleton<CxMyClientPool>
 {
 public:

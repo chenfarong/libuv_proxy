@@ -30,15 +30,25 @@ typedef std::vector<uint8> xarray_uint8;
 
 #define X_CLRF2_C "&#13;&#10;&#13;&#10;"
 
-bool x_str_first(const char* _left,const char* _right,unsigned int _size)
+class CxNetBufferHelper
 {
-    for(unsigned int i=0;i<_size;i++)
-    {
-        if(_right[i] != _left[i]) return false;
-    }
-    return true;
-}
+public:
+	static bool x_str_first(const char* _left, const char* _right, unsigned int _size)
+	{
+		for (unsigned int i = 0; i < _size; i++)
+		{
+			if (_right[i] != _left[i]) return false;
+		}
+		return true;
+	}
 
+	static void xarray_uint8_append(xarray_uint8& des, const char* buf, unsigned int size)
+	{
+		size_t op = des.size();
+		des.resize(des.size() + size);
+		memcpy(&des[op], buf, size);
+	}
+};
 
 class CxDChunk
 {
@@ -236,8 +246,8 @@ public:
         
         for(int i=0;i<l;i++)
         {
-            if(x_str_first(_dat+i,_emark,_emark_len)){
-                des.append(X_CLRF2_C,strlen(X_CLRF2_C));
+            if(CxNetBufferHelper::x_str_first(_dat+i,_emark,_emark_len)){
+				CxNetBufferHelper::xarray_uint8_append(des,X_CLRF2_C,strlen(X_CLRF2_C));
                 i+=(_emark_len-1);
             }else des.push_back(_dat[i]);
         }
@@ -282,9 +292,9 @@ public:
         int l=len-_emark_len;
         for(int i=0;i<l;i++)
         {
-            if(x_str_first(dat+i,_emark,_emark_len))
+            if(CxNetBufferHelper::x_str_first(dat+i,_emark,_emark_len))
             {
-                des.append(X_CLRF2,strlen(X_CLRF2));
+				CxNetBufferHelper::xarray_uint8_append(des,X_CLRF2,strlen(X_CLRF2));
                 i+=3;
             }else des.push_back(dat[i]);
         }

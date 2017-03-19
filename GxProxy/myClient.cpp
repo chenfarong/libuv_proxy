@@ -8,15 +8,17 @@
 #include "myClient.h"
 #include "LibXs.h"
 #include "GxProxy.h"
+#include "XNetBuffer.h"
+#include "XString/XString.h"
 
 X_IMPL_SINSTANCE(CxMyClientPool)
 
 
 CxMyClient::CxMyClient()
 {
-	m_delegate = NULL;
-
+//	m_delegate = NULL;
 	Reset();
+	SetDelegate(this);
 }
 
 void CxMyClient::Reset()
@@ -25,9 +27,19 @@ void CxMyClient::Reset()
 	m_bSSL = false;
 	m_nState = 0;
 	m_iPrivilege = 0;
-
+	m_proxy = NULL;
 }
 
+
+int CxMyClient::Open(sockaddr_in _addr)
+{
+	return 0;
+}
+
+void CxMyClient::Close()
+{
+
+}
 
 void CxMyClient::Accept()
 {
@@ -72,14 +84,18 @@ void CxMyClient::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
 void CxMyClient::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
 {
 	
-	if (sender == this) {
+	if (sender == this) 
+	{
 		//是从客户端那边收来的
 
 		//判断是否进行解密 
 		Decrypto((char*)buf, size);
 
+		//执行本地命令
+		if (0 != DoCmd(buf, size)) return;
+
 		//向代理连接发送数据 前面根据是否共享来决定是否加内容 这个操作在代理那边实现
-		if (m_cur_proxy) m_cur_proxy->Send(buf, size);
+		if (m_proxy) m_proxy->SendPto(buf, size);
 
 	}
 	else {
@@ -119,24 +135,51 @@ CxMyClient* CxMyClientPool::findClientByFD(int64 fd, bool _create)
 CxTcpClient::CxTcpClient()
 {
 	m_socket = -1;
-	pto_type = 0;
+	pto_type = 1;
+	m_delegate = NULL;
+}
+
+int CxTcpClient::Open(sockaddr_in _addr)
+{
+	return 0;
+}
+
+void CxTcpClient::Close()
+{
+
 }
 
 int CxTcpClient::Send(const char* buf, int size)
 {
+	if (m_delegate) {
+		m_delegate->OnTcpSend(this, buf, size);
+	}
 	return size;
+}
+
+int CxTcpClient::SendPto(const char* buf, int size)
+{
+	CxNetBuffer buffer;
+	if (pto_type) {
+		buffer.WritefixEMark(buf, size, "\r\n\r\n", 4);
+	}
+	else {
+		buffer.WritefixP32(buf, size);
+	}
+	return Send(buffer.c_str(), buffer.getContentLength());
 }
 
 int CxTcpClient::Recv(const char* buf, int size)
 {
 	m_input.write(buf, size);
 
+
 	//TODO 这里可以进行命令解析
 	while (1)
 	{
 		CxDChunk* chunk = NULL;
 
-		if (pto_type == 0)
+		if (pto_type == 1)
 		{
 			chunk = m_input.getChunkEMark("\r\n\r\n", 4);
 		}
@@ -147,13 +190,18 @@ int CxTcpClient::Recv(const char* buf, int size)
 
 		if(chunk==NULL) break;
 
+		if (m_delegate) m_delegate->OnTcpRecv(this, chunk->c_str(), chunk->length());
+
 		//
-		if (0 != DoCmd(chunk->c_str(), chunk->length())) {
-			
-			//;
-		}
-		//
-		Send(chunk->c_str(), chunk->length());
+		//if (0 != DoCmd(chunk->c_str(), chunk->length())) {
+		//	
+		//	//;
+		//}
+		//else {
+		//	//临时直接发送回给客户端
+		//	SendPto(chunk->c_str(), chunk->length());
+		//}
+
 		delete chunk;
 
 	}
@@ -185,7 +233,23 @@ void CxTcpClient::SetFD(int64 fd)
 	}
 }
 
+void CxTcpClient::SetDelegate(CxTcpDelegate* _delegate)
+{
+	m_delegate = _delegate;
+}
+
 int CxMyClient::DoCmd(const char* buf, unsigned int size)
 {
+	XTokenizer tok;
+	tok.ParseEx2(buf, size, " \r\n");
+
+	for (unsigned int i = 0; i < mycmds_count; i++)
+	{
+		//const char* _str_first; //FIXME
+		if (tok.FirstTokenIs(mycmds[i].cmd))
+		{
+			(mycmds[i].proc)(this, buf, size);
+		}
+	}
 	return 0;
 }

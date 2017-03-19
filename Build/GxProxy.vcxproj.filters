@@ -7,6 +7,9 @@
     <Filter Include="LibXs">
       <UniqueIdentifier>{e214eeb7-f4ec-4cea-9d6a-0adc0cd99ecd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="LibXs\XString">
+      <UniqueIdentifier>{c00e6073-3491-4aed-947a-eb241d675d8b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libuv\include\tree.h">
@@ -55,6 +58,18 @@
     <ClInclude Include="..\LibXs\XNetBuffer.h">
       <Filter>LibXs</Filter>
     </ClInclude>
+    <ClInclude Include="..\LibXs\XString\StrUtil.h">
+      <Filter>LibXs\XString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LibXs\XString\utf8util.h">
+      <Filter>LibXs\XString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LibXs\XString\XString.h">
+      <Filter>LibXs\XString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LibXs\XString\XStringEx.h">
+      <Filter>LibXs\XString</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\GxProxy\myServer.cpp" />
@@ -70,6 +85,15 @@
     </ClCompile>
     <ClCompile Include="..\LibXs\XLog.cpp">
       <Filter>LibXs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LibXs\XString\StrUtil.cpp">
+      <Filter>LibXs\XString</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LibXs\XString\utf8util.cpp">
+      <Filter>LibXs\XString</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LibXs\XString\XStringEx.cpp">
+      <Filter>LibXs\XString</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

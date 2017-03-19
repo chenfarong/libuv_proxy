@@ -8,6 +8,7 @@
 
 
 typedef unsigned int uint;
+typedef unsigned int uint32;
 
 typedef int64_t int64;
 

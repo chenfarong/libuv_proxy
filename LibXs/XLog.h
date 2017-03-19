@@ -177,12 +177,24 @@ public:
 
 #if(1)
 
+#ifdef _DEBUG
 #define  XLOG_TRACE(fmt,...)   CxLog::Instance()->printf(0,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
 #define  XLOG_DEBUG(fmt,...)   CxLog::Instance()->printf(1,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
 #define  XLOG_INFO(fmt,...)   CxLog::Instance()->printf(2,fmt "\n" ,##__VA_ARGS__)
 #define  XLOG_WARN(fmt,...)   CxLog::Instance()->printf(3,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
 #define  XLOG_ERROR(fmt,...)   CxLog::Instance()->printf(4,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
 #define  XLOG_FATAL(fmt,...)   CxLog::Instance()->printf(5,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
+
+#else
+
+#define  XLOG_TRACE(fmt,...)   CxLog::Instance()->printf(0,fmt " \n" ,##__VA_ARGS__)
+#define  XLOG_DEBUG(fmt,...)   CxLog::Instance()->printf(1,fmt " \n" ,##__VA_ARGS__)
+#define  XLOG_INFO(fmt,...)   CxLog::Instance()->printf(2,fmt "\n" ,##__VA_ARGS__)
+#define  XLOG_WARN(fmt,...)   CxLog::Instance()->printf(3,fmt " \n" ,##__VA_ARGS__)
+#define  XLOG_ERROR(fmt,...)   CxLog::Instance()->printf(4,fmt " \n" ,##__VA_ARGS__)
+#define  XLOG_FATAL(fmt,...)   CxLog::Instance()->printf(5,fmt " \n" ,##__VA_ARGS__)
+
+#endif
 
 #define  XLOG_LINE(l,fmt,...)  CxLog::_instance->printf(l,fmt " %s %d \n" ,##__VA_ARGS__,__FILE__,__LINE__)
 
