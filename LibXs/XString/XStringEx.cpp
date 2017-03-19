@@ -666,6 +666,18 @@ std::string XTokenizer::GetTokenValueString(const string& keyname)
 	return res;
 }
 
+int XTokenizer::GetValueIntByIndex(unsigned int _idx)
+{
+	std::string str = GetValueStringByIndex(_idx);
+	if (str.empty()) return 0;
+	return atoi(str.c_str());
+}
+
+std::string XTokenizer::GetValueStringByIndex(unsigned int _idx)
+{
+	return TokenClear(at(_idx));
+}
+
 std::string XTokenizer::GetString(unsigned int _pos)
 {
 	/*

@@ -28,7 +28,7 @@
     {
         public:
 			static T* Instance() {
-				if (si_instance == NULL) si_instance = new T();
+				if (si_instance == 0) si_instance = new T();
 				return si_instance;
 			}
 

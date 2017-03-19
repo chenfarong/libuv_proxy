@@ -15,8 +15,9 @@
 */
 #include "myClient.h"
 #include <string>
+#include "XString/XString.h"
 
-typedef int(*mycmd_proc)(CxMyClient* cli, const char* buf, int size);
+typedef int(*mycmd_proc)(CxMyClient* cli, const char* buf, int size,XTokenizer* tok);
 
 struct sx_cmd_t
 {
@@ -27,15 +28,15 @@ struct sx_cmd_t
 	std::string help;
 };
 
-int mycmd_client_list(CxMyClient* cli, const char* buf, int size);
+int mycmd_client_list(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
 /**
 让客户端连接到另外一个服务上
 */
-int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size);
+int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
-int mycmd_system_helo(CxMyClient* cli, const char* buf, int size);
-int mycmd_system_help(CxMyClient* cli, const char* buf, int size);
+int mycmd_system_helo(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
+int mycmd_system_help(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
 extern struct sx_cmd_t mycmds[];
 extern unsigned int mycmds_count;

@@ -382,7 +382,8 @@ public:
 	int GetTokenValueInt(unsigned int _pos);
 
 	string GetString(unsigned int _pos);
-
+	std::string GetValueStringByIndex(unsigned int _idx);
+	int GetValueIntByIndex(unsigned int _idx);
 	/**
 	* 返回关键字后面的内容
 	*/

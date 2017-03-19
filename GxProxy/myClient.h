@@ -105,12 +105,12 @@ public:
 
 	virtual int Send(const char* buf, int size);
 
-	void OnRecvFromClient(const char* buf, int size);
+	//void OnRecvFromClient(const char* buf, int size);
 
 	/**
 	连接代理到一个目标
 	*/
-	void SetProxyTarget(sockaddr_in _addr);
+	//void SetProxyTarget(sockaddr_in _addr);
 
 	void Decrypto(char* buf, int size);
 	void Encrypto(char* buf, int size);
@@ -120,6 +120,16 @@ public:
 	virtual void OnTcpRecv(CxTcpClient* sender, const char* buf, int size);
 	
 	virtual int DoCmd(const char* buf, unsigned int size);
+
+public:
+	static void connect_cb(uv_connect_t* req, int status);
+	static void write_cb(uv_write_t* req, int status);
+	static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
+	static void shutdown_cb(uv_shutdown_t* req, int status);
+	static void close_cb(uv_handle_t* handle);
+	static void alloc_cb(uv_handle_t* handle,
+		size_t suggested_size,
+		uv_buf_t* buf);
 
 protected:
 
@@ -131,12 +141,17 @@ protected:
 	std::string m_sCryptoKey;
 
 
-	CxTcpClient* m_proxy;	//和哪个代理链接
+
 
 	int m_iPrivilege;  //权限
 
 public:
 	uv_tcp_t* handle;
+	CxTcpClient* m_proxy;	//和哪个代理链接
+	
+	//用来连接
+	uv_tcp_t client;
+	uv_os_sock_t sock;
 
 };
 
