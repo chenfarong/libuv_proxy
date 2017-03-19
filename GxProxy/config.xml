@@ -1,0 +1,16 @@
+<xml>
+	<server>
+
+		<ip>192.168.50.83</ip>
+		<port>4545</port>
+
+	</server>
+
+	<database>
+		<type>MySQL</type>
+		<server>192.168.50.96</server>
+		<port>3306</port>
+	</database>
+
+
+</xml>
