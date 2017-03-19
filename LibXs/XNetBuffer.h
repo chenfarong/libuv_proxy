@@ -25,6 +25,21 @@ typedef std::vector<uint8> xarray_uint8;
 
 #define X_MAX_NSIZE			65535
 
+#define X_CLRF  "\r\n"
+#define X_CLRF2 "\r\n\r\n"
+
+#define X_CLRF2_C "&#13;&#10;&#13;&#10;"
+
+bool x_str_first(const char* _left,const char* _right,unsigned int _size)
+{
+    for(unsigned int i=0;i<_size;i++)
+    {
+        if(_right[i] != _left[i]) return false;
+    }
+    return true;
+}
+
+
 class CxDChunk
 {
 protected:
@@ -199,7 +214,40 @@ public:
 		memcpy((char*)&dat[des.size()], _emark, _emark_len);
 	}
 
-	//void SwapBuffers(xarray_uint8& des)
+    
+    void WritePackage2(const char* _dat, unsigned int _size,
+                       const char* _emark,unsigned int _emark_len)
+    {
+        if (_emark == NULL) _emark = "\r\n\r\n";
+        if (_emark_len < 1) _emark_len = (int)strlen(_emark);
+        
+        
+        if(_size<_emark_len)
+        {
+            resize(_size+_emark_len);
+            memcpy((char*)&dat[0], _dat, _size);
+            memcpy((char*)&dat[_size], _emark, _emark_len);
+            return;
+        }
+        
+        //先进行转码
+        xarray_uint8 des;
+        int l=_size-_emark_len;
+        
+        for(int i=0;i<l;i++)
+        {
+            if(x_str_first(_dat+i,_emark,_emark_len)){
+                des.append(X_CLRF2_C,strlen(X_CLRF2_C));
+                i+=(_emark_len-1);
+            }else des.push_back(_dat[i]);
+        }
+        
+        resize(des.size() + _emark_len);
+        memcpy((char*)&dat[0], (const char*)&des[0], des.size());
+        memcpy((char*)&dat[des.size()], _emark, _emark_len);
+    }
+    
+    //void SwapBuffers(xarray_uint8& des)
 	//{
 	//	//dat.swap(des);
 	//	resize(des.size());
@@ -223,6 +271,28 @@ public:
 		memcpy(dat, (char*)&des[0], des.size());
 	}
 
+    void ReadPackageFix2(const char* _emark, int _emark_len)
+    {
+        if (length() < 1) return;
+        
+        if (_emark == NULL) _emark = "\r\n\r\n";
+        if (_emark_len < 1) _emark_len = (int)strlen(_emark);
+        //先进行转码
+        xarray_uint8 des;
+        int l=len-_emark_len;
+        for(int i=0;i<l;i++)
+        {
+            if(x_str_first(dat+i,_emark,_emark_len))
+            {
+                des.append(X_CLRF2,strlen(X_CLRF2));
+                i+=3;
+            }else des.push_back(dat[i]);
+        }
+        
+        resize(des.size());
+        memcpy(dat, (char*)&des[0], des.size());
+    }
+    
 };
 #endif
 
@@ -448,6 +518,44 @@ public:
 
 		return chunk;
 	}
+    
+    
+    CxDChunk*  getChunkEMarkEx(const char* _endmark,size_t _size)
+    {
+        std::lock_guard<std::mutex> lck(mtx_class);
+        
+        size_t cl = getContentLength();
+        if (cl == 0) return NULL;
+        
+        if (_endmark == NULL) _endmark = "\r\n\r\n";
+        if (_size < 1) _size = strlen(_endmark);
+        
+        if (cl < _size) return NULL;
+        
+        size_t ml = _size;
+        size_t k = _rpos;
+        bool  b = false;
+        
+        
+        for (;k<=_wpos-ml;k++)
+        {
+            b = firstEqual((const char*)data+k, _endmark, ml);
+            if ( b== true) break;
+        }
+        
+        if (!b) return NULL;
+        
+        int ns = (int)(k+ml-_rpos);
+        
+        CxDChunkEMark* chunk = new CxDChunkEMark(/*getReaderPtr(), ns*/);
+        chunk->SetData(getReaderPtr(), ns);
+        rposInc(ns);
+        chunk->ReadPackageFix2(_endmark, (int)_size);
+        
+        return chunk;
+    }
+    
+    
 #endif
 
 	void WritefixP32(const void* _dat, unsigned int _size)
