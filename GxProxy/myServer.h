@@ -8,6 +8,7 @@
 class CxMyServer : public Singleton<CxMyServer>
 {
 public:
+	
 	enum STS
 	{
 		INIT,
@@ -18,8 +19,8 @@ public:
 	CxMyServer();
 	virtual ~CxMyServer();
 
-
 public:
+
 	static void connect_cb(uv_stream_t* stream, int status);
 	static void alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 	static void read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf);

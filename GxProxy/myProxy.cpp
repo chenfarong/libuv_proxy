@@ -45,7 +45,7 @@ void CxMyProxy::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
 	}
 }
 
-CxTcpClient* CxMyProxy::find(sockaddr_in _addr)
+CxTcpClientProxy* CxMyProxy::find(sockaddr_in _addr)
 {
 	for (auto it:proxyConns.container)
 	{
@@ -55,9 +55,9 @@ CxTcpClient* CxMyProxy::find(sockaddr_in _addr)
 	return NULL;
 }
 
-CxTcpClient* CxMyProxy::findWitchConnect(sockaddr_in _addr)
+CxTcpClientProxy* CxMyProxy::findWitchConnect(sockaddr_in _addr)
 {
-	CxTcpClient* tcpClient=NULL;
+	CxTcpClientProxy* tcpClient=NULL;
 	
 	if (proxy_type == 0) {
 		tcpClient = createWitchConnect(_addr);
@@ -69,7 +69,7 @@ CxTcpClient* CxMyProxy::findWitchConnect(sockaddr_in _addr)
 	return tcpClient;
 }
 
-CxTcpClient* CxMyProxy::createWitchConnect(sockaddr_in _addr)
+CxTcpClientProxy* CxMyProxy::createWitchConnect(sockaddr_in _addr)
 {
 	CxTcpClientProxy* cli = new CxTcpClientProxy();
 	cli->Open(_addr);
@@ -109,9 +109,7 @@ static uv_os_sock_t create_tcp_socket(void) {
 
 int CxTcpClientProxy::Open(sockaddr_in _addr)
 {
-//	uv_connect_t* connect_req = (uv_connect_t*)malloc(sizeof(uv_connect_t));
-//	connect_req->owner = this;
-//	connect_req->uvreq.data = this;
+
 	connect_req.data = this;
 
 	//uv_tcp_connect()
@@ -205,17 +203,10 @@ void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
 
 void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
-	//获得哪个的指针 这里获得不正确
-
 	XX_ASSERT(stream != NULL);
-	
-	
 	CxTcpClientProxy* _owner = (CxTcpClientProxy*)stream->data;// container_of(conn, sx_proxy_connect, uvreq);
 
 	if (nread >= 0) {
-		//ASSERT(nread == 4);
-		//ASSERT(memcmp("PING", buf->base, nread) == 0);
-		//XLOG_INFO("%s",buf->base);//直接这样会导致崩溃 因为没有结束符
 		if(_owner) _owner->Recv(buf->base, nread);
 	}
 	else {
@@ -225,7 +216,6 @@ void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_
 	}
 
 	free(buf->base); //释放内存
-	//delete read_req; //释放内存 在关闭的时候释放 !!! 
 }
 
 void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)

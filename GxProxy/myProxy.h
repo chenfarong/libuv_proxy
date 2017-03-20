@@ -5,19 +5,6 @@
 #include "myClient.h"
 #include "SafeContainer.h"
 
-class CxTcpClientProxy;
-
-struct sx_proxy_connect
-{
-	uv_connect_t uvreq;
-	CxTcpClientProxy* owner;
-};
-
-struct sx_proxy
-{
-	uv_tcp_t handle;
-	CxTcpClientProxy* owner;
-};
 
 /**
 
@@ -37,9 +24,7 @@ public:
 	static void read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf);
 	static void shutdown_cb(uv_shutdown_t* req, int status);
 	static void close_cb(uv_handle_t* handle);
-	static void alloc_cb(uv_handle_t* handle,
-		size_t suggested_size,
-		uv_buf_t* buf);
+	static void alloc_cb(uv_handle_t* handle,size_t suggested_size,uv_buf_t* buf);
 
 public:
 	CxTcpClient* cli;
@@ -47,7 +32,8 @@ public:
 	//用来连接
 	uv_tcp_t client;
 	uv_os_sock_t sock;
-	uv_connect_t connect_req;
+
+	uv_connect_t connect_req; //连接请求
 };
 
 
@@ -64,19 +50,12 @@ public:
 	virtual void OnTcpRecv(CxTcpClient* sender, const char* buf, int size);
 
 public:
-//	void SendToClient(int fd, const char* buf, int size);
-//	void SendToTarget(int fd, const char* buf, int size);
-//	void OnRecvFromTarget(int fd, const char* buf, int size);
-//	void OnRecvFromClient(int fd, const char* buf, int size);
-
-
-public:
 	/**
 	获得目标服务的代理连接
 	*/
-	CxTcpClient* find(sockaddr_in _addr);
-	CxTcpClient* findWitchConnect(sockaddr_in _addr);
-	CxTcpClient* createWitchConnect(sockaddr_in _addr);
+	CxTcpClientProxy* find(sockaddr_in _addr);
+	CxTcpClientProxy* findWitchConnect(sockaddr_in _addr);
+	CxTcpClientProxy* createWitchConnect(sockaddr_in _addr);
 
 protected:
 	/**

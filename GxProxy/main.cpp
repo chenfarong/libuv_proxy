@@ -33,6 +33,8 @@ int main(int argc,const char** argv)
 
 	//std::cout << "Hello World" << std::endl;
 
+	CxMyClientPool::Instance()->Init(1024);
+
 	CxMyServer::Instance()->Listen("0.0.0.0", 8000);
 
 	CxMyServer::Instance()->Run();

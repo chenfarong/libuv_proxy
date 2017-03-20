@@ -2,9 +2,7 @@
 #define myClient_h__
 
 /*
-
 客户端连接上来后等待验证
-
 */
 
 #include "Singleton.h"
@@ -27,7 +25,6 @@ typedef struct {
 	uv_buf_t buf;
 	CxMyClient* client;
 } write_req_t;
-
 
 
 class CxTcpDelegate
@@ -83,6 +80,11 @@ private:
 	
 };
 
+#pragma mark - 
+//////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////
+
 
 class CxMyClient : public CxTcpClient,public CxTcpDelegate
 {
@@ -122,26 +124,29 @@ public:
 	virtual int DoCmd(const char* buf, unsigned int size);
 
 public:
-
+	/**
+	设置新的通信加/解密钥
+	*/
+	void SetCryptoKey(std::string _key);
 
 protected:
 
+	//加密握手 通过验证 开始正常
 	int m_nState;
-
-	sockaddr_in m_addr;
-
 	bool m_bSSL;
+
 	std::string m_sCryptoKey;
 
-
-
-
-	int m_iPrivilege;  //权限
 
 public:
 	uv_tcp_t* handle;
 	CxTcpClient* m_proxy;	//和哪个代理链接
-	
+	sockaddr_in m_proxy_addr; //目标服务的地址
+
+	int m_iPrivilege;  //权限
+
+private:
+	std::string m_sCryptoKeyOld;
 
 
 };
@@ -157,7 +162,7 @@ public:
 class CxMyClientPool : public Singleton<CxMyClientPool>
 {
 public:
-	void Init(uint _client_num);
+	void Init(uint _client_num=1024,unsigned int _start=1);
 
 
 public:
@@ -170,7 +175,6 @@ public:
 	void Step();
 
 	CxMyClient* findClientByFD(int64 fd,bool _create);
-
 
 
 };

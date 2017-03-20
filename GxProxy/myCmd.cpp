@@ -51,3 +51,8 @@ int mycmd_system_helo(CxMyClient* cli, const char* buf, int size, XTokenizer* to
 	return 1;
 }
 
+int mycmd_system_help(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
+{
+	return 1;
+}
+

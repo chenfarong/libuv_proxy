@@ -9,6 +9,11 @@ class CxMyConfig :public XsConfig,public Singleton<CxMyConfig>
 public:
 	CxMyConfig();
 
+
+public:
+	static int proxy_type;
+	static bool enable_ssl;
+
 };
 
 

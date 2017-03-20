@@ -17,7 +17,7 @@ X_IMPL_SINSTANCE(CxMyClientPool)
 
 CxMyClient::CxMyClient()
 {
-//	m_delegate = NULL;
+	m_delegate = NULL;
 	Reset();
 	SetDelegate(this);
 }
@@ -29,6 +29,8 @@ void CxMyClient::Reset()
 	m_nState = 0;
 	m_iPrivilege = 0;
 	m_proxy = NULL;
+	m_input.clear();
+
 }
 
 
@@ -42,7 +44,7 @@ int CxMyClient::Open(sockaddr_in _addr)
 
 void CxMyClient::Close()
 {
-
+	Reset();
 }
 
 void CxMyClient::Accept()
@@ -104,10 +106,16 @@ void CxMyClient::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
 	}
 	else {
 		//从目标服务器来的数据
-		//TODO 在代理那边已经把谁的进行剥离了
+		//在代理那边已经把谁的进行剥离了
 		Send(buf, size);
 	}
 
+}
+
+void CxMyClientPool::Init(uint _client_max/*=1024*/,unsigned int _client_start)
+{
+	for (uint i = _client_start; i < _client_max; i++)
+		findClientByFD(i, true);
 }
 
 void CxMyClientPool::CheckClientOnline()
@@ -177,8 +185,8 @@ int CxTcpClient::Recv(const char* buf, int size)
 {
 	m_input.write(buf, size);
 
+	//这里进行数据包完整后执行
 
-	//TODO 这里可以进行命令解析
 	while (1)
 	{
 		CxDChunk* chunk = NULL;
@@ -200,8 +208,6 @@ int CxTcpClient::Recv(const char* buf, int size)
 
 		//
 		//if (0 != DoCmd(chunk->c_str(), chunk->length())) {
-		//	
-		//	//;
 		//}
 		//else {
 		//	//临时直接发送回给客户端
@@ -235,7 +241,9 @@ void CxTcpClient::SetFD(int64 fd)
 
 			m_delegate->OnTcpOpen(this);
 		}
-		else m_delegate->OnTcpClose(this);
+		else {
+			m_delegate->OnTcpClose(this);
+		}
 	}
 }
 
@@ -244,6 +252,9 @@ void CxTcpClient::SetDelegate(CxTcpDelegate* _delegate)
 	m_delegate = _delegate;
 }
 
+/**
+执行命令
+*/
 int CxMyClient::DoCmd(const char* buf, unsigned int size)
 {
 	if (size < 3) return 0;
@@ -257,13 +268,21 @@ int CxMyClient::DoCmd(const char* buf, unsigned int size)
 	XLOG_WARN("cmd:%s", cmd.c_str());
 	for (unsigned int i = 0; i < mycmds_count; i++)
 	{
-		//const char* _str_first; //FIXME
-		XLOG_INFO("cmd:%s", mycmds[i].cmd);
+//		XLOG_INFO("cmd:%s", mycmds[i].cmd);
 		if (0== cmd.compare(mycmds[i].cmd))
 		{
 			(mycmds[i].proc)(this, buf, size,&tok);
 		}
 	}
 	return 0;
+}
+
+/**
+向客户端发送新的加密密钥
+*/
+void CxMyClient::SetCryptoKey(std::string _key)
+{
+	//等收到客户端新密钥设置成功后才用新的密钥进行通信
+	//在密钥握手阶段 发送给客户端的数据都先压入待发送队列中
 }
 

@@ -2,7 +2,7 @@
 #define myCmd_h__
 
 /*
-
+@!CLIENT ECHO 返回客户端发送的内容
 @!CLIENT LIST 连接客户端列表
 @!CLIENT KICK 强制断开客户端
 @!CLIENT NAME 给连接客户端命名 设置为账号名称
@@ -10,9 +10,10 @@
 @!CLIENT LOGIN_EX 用户名+会话号
 @!CLIENT SU 权限提升
 
-@!CLIENT PROXY 客户端换新的目标
+@!CLIENT PROXY 客户端换新的目标 如果后面没有参数 当前如果有连接目标将关闭
 
 */
+
 #include "myClient.h"
 #include <string>
 #include "XString/XString.h"
