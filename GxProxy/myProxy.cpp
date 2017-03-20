@@ -16,6 +16,19 @@ void CxMyProxy::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
 {
 	//TODO 根据类型 看看是否要加上前边的客户端标记
 
+	CxTcpClientProxy* conn = (CxTcpClientProxy*)sender;
+	uv_stream_t* stream = (uv_stream_t*)&conn->client;
+
+	write_req_t * wr = (write_req_t*)malloc(sizeof *wr);
+	XX_ASSERT(wr != NULL);
+	wr->buf = uv_buf_init((char*)buf, size); //这里没有申请新的内存
+
+	int r = uv_write(&wr->req, stream, &wr->buf, 1, CxTcpClientProxy::write_cb);
+	if (r!=0)
+	{
+		XX_FATAL("uv_write failed");
+	}
+
 }
 
 void CxMyProxy::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
@@ -92,10 +105,17 @@ static uv_os_sock_t create_tcp_socket(void) {
 	return sock;
 }
 
+struct sx_proxy_connect
+{
+	uv_connect_t uvreq;
+	CxTcpClientProxy* owner;
+};
 
 int CxTcpClientProxy::Open(sockaddr_in _addr)
 {
-	uv_connect_t* connect_req = (uv_connect_t*)malloc(sizeof(uv_connect_t));
+	sx_proxy_connect* connect_req = (sx_proxy_connect*)malloc(sizeof(sx_proxy_connect));
+	connect_req->owner = this;
+
 	//uv_tcp_connect()
 	sock = create_tcp_socket();
 
@@ -105,11 +125,14 @@ int CxTcpClientProxy::Open(sockaddr_in _addr)
 	r = uv_tcp_open(&client, sock);
 	XX_ASSERT(r == 0);
 
-	r = uv_tcp_connect(connect_req,
+	r = uv_tcp_connect((uv_connect_t*)connect_req,
 		&client,
 		(const struct sockaddr*) &_addr,
 		CxTcpClientProxy::connect_cb);
 	XX_ASSERT(r == 0);
+
+	//这里一个代理和客户端绑定的事件
+
 	return 0;
 }
 
@@ -125,26 +148,49 @@ void CxTcpClientProxy::Close()
 
 void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 {
-	//uv_buf_t buf = uv_buf_init("PING", 4);
-	uv_stream_t* stream;
-	//uv_shutdown_t* shutdown_req=(uv_shutdown_t*)malloc(sizeof(uv_shutdown_t));
-	int r=0;
+	int r = 0;
+	uv_stream_t* stream = req->handle;
+	sx_proxy_connect* proxy_req = (sx_proxy_connect*)req;
 
-	stream = req->handle;
-
+	if (status != 0)
+	{
+		XLOG_WARN("连接失败");
+		goto lend;
+	}
 
 	/* Shutdown on drain. */
 	//r = uv_shutdown(shutdown_req, stream, shutdown_cb);
 	//XX_ASSERT(r == 0);
 
 	/* Start reading */
-	r = uv_read_start(stream, alloc_cb, read_cb);
+	r = uv_read_start(stream, CxTcpClientProxy::alloc_cb, CxTcpClientProxy::read_cb);
+	if (r != 0) {
+		XLOG_ERROR("%s", uv_err_name(r));
+		//连接服务器失败 
+		goto lend;
+	}
 	XX_ASSERT(r == 0);
+
+	CxTcpClientProxy* _cli = proxy_req->owner;
+	CxMyClient* _mcli=(CxMyClient*)_cli->cli;// ->m_proxy = _cli;
+	_mcli->m_proxy = _cli;
+
+lend:
+	free(req);
+
 }
 
 void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
 {
+	if (status) {
+		fprintf(stderr, "uv_write error: %s\n", uv_strerror(status));
+		XX_ASSERT(0);
+	}
 
+	write_req_t* wr = (write_req_t*)req;
+
+//	free(wr->buf.base); //释放内存 导致崩溃
+	free(req);
 }
 
 void CxTcpClientProxy::read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf)
@@ -154,7 +200,7 @@ void CxTcpClientProxy::read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* 
 	if (nread >= 0) {
 		//ASSERT(nread == 4);
 		//ASSERT(memcmp("PING", buf->base, nread) == 0);
-		
+		XLOG_INFO("%s",buf->base);
 	}
 	else {
 		XX_ASSERT(nread == UV_EOF);
@@ -177,6 +223,9 @@ void CxTcpClientProxy::close_cb(uv_handle_t* handle)
 
 void CxTcpClientProxy::alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 {
-	buf->base = (char*)malloc(suggested_size);
+	do {
+		buf->base = (char*)malloc(suggested_size);
+	} while (buf->base == NULL);
+
 	buf->len = suggested_size;
 }

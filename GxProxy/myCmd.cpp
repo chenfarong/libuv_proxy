@@ -37,9 +37,10 @@ int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* t
 
 	xnet_addr(_server.c_str(), _service, &_addr);
 
-	CxTcpClient* _tcp = CxMyProxy::Instance()->findWitchConnect(_addr);
+	CxTcpClientProxy* _tcp =(CxTcpClientProxy*) CxMyProxy::Instance()->findWitchConnect(_addr);
 	XX_ASSERT(_tcp);
-	cli->m_proxy = _tcp;
+	_tcp->cli = cli;
+//	cli->m_proxy = _tcp; //这个要等连接后才设置
 
 	return 1;
 }
