@@ -182,19 +182,21 @@ int CxTcpClient::Recv(const char* buf, int size)
 	while (1)
 	{
 		CxDChunk* chunk = NULL;
-
+		int nsize = 0;
 		if (pto_type == 1)
 		{
 			chunk = m_input.getChunkEMark("\r\n\r\n", 4);
+			if(chunk) nsize = chunk->length() - 4;
 		}
 		else
 		{
 			chunk = m_input.getChunkPreUint32();
+			if (chunk) nsize = chunk->length();
 		}
 
 		if(chunk==NULL) break;
 
-		if (m_delegate) m_delegate->OnTcpRecv(this, chunk->c_str(), chunk->length());
+		if (m_delegate) m_delegate->OnTcpRecv(this, chunk->c_str(), nsize);
 
 		//
 		//if (0 != DoCmd(chunk->c_str(), chunk->length())) {

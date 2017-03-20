@@ -5,8 +5,19 @@
 #include "myClient.h"
 #include "SafeContainer.h"
 
+class CxTcpClientProxy;
 
+struct sx_proxy_connect
+{
+	uv_connect_t uvreq;
+	CxTcpClientProxy* owner;
+};
 
+struct sx_proxy
+{
+	uv_tcp_t handle;
+	CxTcpClientProxy* owner;
+};
 
 /**
 
@@ -36,7 +47,7 @@ public:
 	//用来连接
 	uv_tcp_t client;
 	uv_os_sock_t sock;
-
+	uv_connect_t connect_req;
 };
 
 

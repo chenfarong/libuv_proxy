@@ -105,16 +105,14 @@ static uv_os_sock_t create_tcp_socket(void) {
 	return sock;
 }
 
-struct sx_proxy_connect
-{
-	uv_connect_t uvreq;
-	CxTcpClientProxy* owner;
-};
+
 
 int CxTcpClientProxy::Open(sockaddr_in _addr)
 {
-	sx_proxy_connect* connect_req = (sx_proxy_connect*)malloc(sizeof(sx_proxy_connect));
-	connect_req->owner = this;
+//	uv_connect_t* connect_req = (uv_connect_t*)malloc(sizeof(uv_connect_t));
+//	connect_req->owner = this;
+//	connect_req->uvreq.data = this;
+	connect_req.data = this;
 
 	//uv_tcp_connect()
 	sock = create_tcp_socket();
@@ -125,7 +123,7 @@ int CxTcpClientProxy::Open(sockaddr_in _addr)
 	r = uv_tcp_open(&client, sock);
 	XX_ASSERT(r == 0);
 
-	r = uv_tcp_connect((uv_connect_t*)connect_req,
+	r = uv_tcp_connect((uv_connect_t*)&connect_req,
 		&client,
 		(const struct sockaddr*) &_addr,
 		CxTcpClientProxy::connect_cb);
@@ -146,11 +144,23 @@ void CxTcpClientProxy::Close()
 #endif
 }
 
+struct sx_muv_read_q
+{
+	uv_tcp_t handle;
+	CxTcpClientProxy* owner;
+};
+
+struct sx_proxy_stream 
+{
+	uv_stream_t stream;
+	CxTcpClientProxy* owner;
+};
+
 void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 {
 	int r = 0;
 	uv_stream_t* stream = req->handle;
-	sx_proxy_connect* proxy_req = (sx_proxy_connect*)req;
+	stream->data = req->data;
 
 	if (status != 0)
 	{
@@ -171,13 +181,13 @@ void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 	}
 	XX_ASSERT(r == 0);
 
-	CxTcpClientProxy* _cli = proxy_req->owner;
+	CxTcpClientProxy* _cli =(CxTcpClientProxy*) req->data;
 	CxMyClient* _mcli=(CxMyClient*)_cli->cli;// ->m_proxy = _cli;
 	_mcli->m_proxy = _cli;
 
 lend:
-	free(req);
-
+//	free(req); //后面还要使用 成员属性 不得释放
+	XLOG_DEBUG("成功连接");
 }
 
 void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
@@ -193,22 +203,29 @@ void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
 	free(req);
 }
 
-void CxTcpClientProxy::read_cb(uv_stream_t* tcp, ssize_t nread, const uv_buf_t* buf)
+void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf)
 {
-	XX_ASSERT(tcp != NULL);
+	//获得哪个的指针 这里获得不正确
+
+	XX_ASSERT(stream != NULL);
+	
+	
+	CxTcpClientProxy* _owner = (CxTcpClientProxy*)stream->data;// container_of(conn, sx_proxy_connect, uvreq);
 
 	if (nread >= 0) {
 		//ASSERT(nread == 4);
 		//ASSERT(memcmp("PING", buf->base, nread) == 0);
-		XLOG_INFO("%s",buf->base);
+		//XLOG_INFO("%s",buf->base);//直接这样会导致崩溃 因为没有结束符
+		if(_owner) _owner->Recv(buf->base, nread);
 	}
 	else {
 		XX_ASSERT(nread == UV_EOF);
 		printf("GOT EOF\n");
-		uv_close((uv_handle_t*)tcp, close_cb);
+		uv_close((uv_handle_t*)stream, close_cb);
 	}
 
 	free(buf->base); //释放内存
+	//delete read_req; //释放内存 在关闭的时候释放 !!! 
 }
 
 void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)
@@ -218,7 +235,7 @@ void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)
 
 void CxTcpClientProxy::close_cb(uv_handle_t* handle)
 {
-
+	//释放内存重要
 }
 
 void CxTcpClientProxy::alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
