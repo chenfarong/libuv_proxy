@@ -112,6 +112,15 @@ void CxMyClient::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
 
 }
 
+CxMyClientPool::~CxMyClientPool()
+{
+	for (auto it : fd_clients.container)
+	{
+		delete it.second;
+	}
+	fd_clients.container.clear();
+}
+
 void CxMyClientPool::Init(uint _client_max/*=1024*/,unsigned int _client_start)
 {
 	for (uint i = _client_start; i < _client_max; i++)
@@ -120,13 +129,27 @@ void CxMyClientPool::Init(uint _client_max/*=1024*/,unsigned int _client_start)
 
 void CxMyClientPool::CheckClientOnline()
 {
+	return;
+
+	time_t _nowSecond = time(NULL);
+	XLOG_DEBUG("%d",(int)_nowSecond);
+	for (auto it : fd_clients.container)
+	{
+		
+	}
+//	if (difftime(_nowSecond - m_last_check_time) > 5
 
 }
 
 void CxMyClientPool::Step()
 {
-	//看时间过去了多少 如果5秒 做一次巡查客户端是否都在线
-	CheckClientOnline();
+	time_t _nowSecond = time(NULL);
+	
+	// 1 秒 做一次巡查客户端是否都在线
+	if (difftime(_nowSecond , m_last_check_time) >= 1) {
+		CheckClientOnline();
+		m_last_check_time = _nowSecond;
+	}
 
 	//3分钟做一次动态通信加密变换
 }
@@ -183,6 +206,9 @@ int CxTcpClient::SendPto(const char* buf, int size)
 
 int CxTcpClient::Recv(const char* buf, int size)
 {
+
+	m_tiBreak = time(NULL);
+
 	m_input.write(buf, size);
 
 	//这里进行数据包完整后执行
@@ -204,7 +230,7 @@ int CxTcpClient::Recv(const char* buf, int size)
 
 		if(chunk==NULL) break;
 
-		if (m_delegate) m_delegate->OnTcpRecv(this, chunk->c_str(), nsize);
+		if (m_delegate && nsize>0) m_delegate->OnTcpRecv(this, chunk->c_str(), nsize);
 
 		//
 		//if (0 != DoCmd(chunk->c_str(), chunk->length())) {

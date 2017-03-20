@@ -12,6 +12,15 @@ CxMyProxy::CxMyProxy()
 	proxy_type = 0;
 }
 
+CxMyProxy::~CxMyProxy()
+{
+	for (auto it : proxyConns.container)
+	{
+		delete it;
+	}
+	proxyConns.container.clear();
+}
+
 void CxMyProxy::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
 {
 	//TODO 根据类型 看看是否要加上前边的客户端标记
@@ -78,6 +87,14 @@ CxTcpClientProxy* CxMyProxy::createWitchConnect(sockaddr_in _addr)
 	return cli;
 }
 
+void CxMyProxy::Recycle(CxTcpClientProxy* _cli)
+{
+	XX_ASSERT(_cli);
+	_cli->Close();
+	//TODO 把这个放入回收站 等待重新被使用
+
+}
+
 CxTcpClientProxy::CxTcpClientProxy()
 {
 	cli = NULL;
@@ -134,12 +151,17 @@ int CxTcpClientProxy::Open(sockaddr_in _addr)
 
 void CxTcpClientProxy::Close()
 {
-	int r;
-#ifdef _WIN32
-	r = closesocket(sock);
-#else
-	r = close(sock);
-#endif
+	int r=0;
+
+//#ifdef _WIN32
+//	r = closesocket(sock);
+//#else
+//	r = close(sock);
+//#endif
+
+	uv_shutdown_t* sreq = (uv_shutdown_t*)malloc(sizeof *sreq);
+	XX_ASSERT(0 == uv_shutdown(sreq, connect_req.handle, shutdown_cb));
+
 }
 
 struct sx_muv_read_q
@@ -220,12 +242,15 @@ void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_
 
 void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)
 {
+	uv_close((uv_handle_t*)req->handle, close_cb);
 	free(req);
 }
 
 void CxTcpClientProxy::close_cb(uv_handle_t* handle)
 {
 	//释放内存重要
+	CxTcpClientProxy* _self = (CxTcpClientProxy*)handle->data;
+	if(_self) _self->SetFD(-1);
 }
 
 void CxTcpClientProxy::alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)

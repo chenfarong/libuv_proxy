@@ -4,6 +4,7 @@
 #include "myProxy.h"
 #include "uv.h"
 #include "xnet.h"
+#include "myConfig.h"
 
 static const char* X_APP_VERSION = "GXPROXY 2017-03-19";
 
@@ -31,8 +32,31 @@ int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* t
 {
 	//取得目标服务器地址 和端口 然后连接
 	
+	if (tok->NumLines() < 2)
+	{
+		//cli->SendPto();
+		return 1;
+	}
+
+
 	sockaddr_in _addr;
 	std::string _server = tok->GetValueStringByIndex(1);
+
+	//关闭
+	if (_server.compare("CLOSE") == 0)
+	{
+		if (cli->m_proxy) {
+			//TODO 如果是 1 对 1 的就关闭连接
+			if (CxMyConfig::proxy_type == 0)
+			{
+				CxMyProxy::Instance()->Recycle((CxTcpClientProxy*)cli->m_proxy);
+			}
+
+			cli->m_proxy = NULL;
+		}
+		return 1;
+	}
+
 	int _service = tok->GetValueIntByIndex(2);
 
 	xnet_addr(_server.c_str(), _service, &_addr);

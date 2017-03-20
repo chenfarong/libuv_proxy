@@ -145,6 +145,8 @@ public:
 
 	int m_iPrivilege;  //х╗оч
 
+
+
 private:
 	std::string m_sCryptoKeyOld;
 
@@ -162,6 +164,8 @@ private:
 class CxMyClientPool : public Singleton<CxMyClientPool>
 {
 public:
+	virtual ~CxMyClientPool();
+
 	void Init(uint _client_num=1024,unsigned int _start=1);
 
 
@@ -176,6 +180,7 @@ public:
 
 	CxMyClient* findClientByFD(int64 fd,bool _create);
 
+	time_t m_last_check_time;
 
 };
 

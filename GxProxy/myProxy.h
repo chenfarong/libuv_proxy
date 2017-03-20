@@ -44,6 +44,7 @@ class CxMyProxy : public Singleton<CxMyProxy>,public CxTcpDelegate
 {
 public:
 	CxMyProxy();
+	virtual ~CxMyProxy();
 
 public:
 	virtual void OnTcpSend(CxTcpClient* sender, const char* buf, int size);
@@ -56,6 +57,9 @@ public:
 	CxTcpClientProxy* find(sockaddr_in _addr);
 	CxTcpClientProxy* findWitchConnect(sockaddr_in _addr);
 	CxTcpClientProxy* createWitchConnect(sockaddr_in _addr);
+
+
+	void Recycle(CxTcpClientProxy* _cli);
 
 protected:
 	/**

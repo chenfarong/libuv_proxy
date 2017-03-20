@@ -3,6 +3,7 @@
 #include "GxProxy.h"
 #include "xnet.h"
 
+#include <time.h>
 
 /*
 对外监听一个端口
@@ -67,7 +68,7 @@ void CxMyServer::connect_cb(uv_stream_t* stream, int status)
 	int64 cli_fd = x_uv_tcp_fd(conn->handle);
 	conn->client = CxMyClientPool::Instance()->findClientByFD(cli_fd, true);
 	conn->client->handle = &conn->handle;
-//	conn->client->TimeConn =  XG_GetTickCount();
+	conn->client->m_tiBirth =  time(NULL);
 
 	r = uv_read_start((uv_stream_t*)&conn->handle, alloc_cb, read_cb);
 	XX_ASSERT(r == 0);

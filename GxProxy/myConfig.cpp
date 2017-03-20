@@ -5,6 +5,9 @@
 template<>
 CxMyConfig* Singleton<CxMyConfig>::si_instance = NULL;
 
+int CxMyConfig::proxy_type = 0;
+
+CxMyConfig theConfig;
 
 CxMyConfig::CxMyConfig()
 {
@@ -17,5 +20,6 @@ CxMyConfig::CxMyConfig()
 	SetAttrib("client", "timeout", "30");			//客户端如果30秒没有发送消息上来就主动断开它 如果是0就不管这事
 	SetAttrib("client", "net_buf_size", "40960");	//接收数据缓冲区
 }
+
 
 

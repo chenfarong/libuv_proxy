@@ -9,7 +9,7 @@
 
 
 #include <iostream>
-
+//#include <vld.h>
 #include "GxProxy.h"
 
 

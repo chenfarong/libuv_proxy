@@ -16,6 +16,6 @@ public:
 
 };
 
-
+extern CxMyConfig theConfig;
 
 #endif // myConfig_h__
