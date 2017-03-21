@@ -70,6 +70,9 @@
     <ClInclude Include="..\LibXs\XString\XStringEx.h">
       <Filter>LibXs\XString</Filter>
     </ClInclude>
+    <ClInclude Include="..\LibXs\XTcpClient.h">
+      <Filter>LibXs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\GxProxy\myServer.cpp" />
@@ -94,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="..\LibXs\XString\XStringEx.cpp">
       <Filter>LibXs\XString</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LibXs\XTcpClient.cpp">
+      <Filter>LibXs</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -224,12 +224,12 @@ inline void XLOG_Init(int _level = 0, const char* _path = 0)
 #define  XLOG_FATAL  LOGFMTF
 #endif
 
-void XLOG_STREAM(int level, const char * log);
 
-/**
-将日志设置到远程服务器上
-*/
-void XLOG_SET_REMOTE(const char* _ipAddr, int _port);
+
+namespace Xs
+{
+	unsigned long Now();
+};
 
 
 #endif // XLog_h__

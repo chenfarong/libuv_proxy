@@ -407,6 +407,11 @@ public:
 	//忽略大小写
 	bool FirstTokenIsIcase(const std::string& keyname);
 
+	/**
+	返回行数
+	*/
+	size_t NumLines() { return lines.size(); };
+
 public:
 //		string m_dat;
 //   std::list<string>  token_str;

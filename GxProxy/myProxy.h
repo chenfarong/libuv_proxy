@@ -57,7 +57,7 @@ public:
 	CxTcpClientProxy* find(sockaddr_in _addr);
 	CxTcpClientProxy* findWitchConnect(sockaddr_in _addr);
 	CxTcpClientProxy* createWitchConnect(sockaddr_in _addr);
-
+	CxTcpClientProxy* createClient();
 
 	void Recycle(CxTcpClientProxy* _cli);
 

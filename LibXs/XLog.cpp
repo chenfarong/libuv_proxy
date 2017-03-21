@@ -63,6 +63,50 @@
 typedef unsigned char uint8;
 typedef unsigned short WORD;
 
+namespace Xs
+{
+#ifndef _MSC_VER
+
+
+#include <sys/time.h>
+
+	unsigned long Now()
+	{
+		struct timeval now;
+		//获得当前精确时间(1970年1月1日到现在的时间)，
+		//执行时间（微秒） = 1000000 * (tv_end.tv_sec - tv_begin.tv_sec) + tv_end.tv_usec - tv_begin.tv_usec;
+		gettimeofday(&now, NULL);
+		return 1000 * now.tv_sec + now.tv_usec / 1000;
+	}
+
+#else
+
+#include <windows.h>
+
+
+	//该函数从0开始计时，返回自设备启动后的毫秒数（不含系统暂停时间）。
+	unsigned long Now()
+	{
+		return  ::GetTickCount();
+	}
+
+	int gettimeofday(struct timeval * val, struct timezone *)
+	{
+		if (val)
+		{
+			LARGE_INTEGER liTime, liFreq;
+			QueryPerformanceFrequency(&liFreq);
+			QueryPerformanceCounter(&liTime);
+			val->tv_sec = (long)(liTime.QuadPart / liFreq.QuadPart);
+			val->tv_usec = (long)(liTime.QuadPart * 1000000.0 / liFreq.QuadPart - val->tv_sec * 1000000.0);
+		}
+		return 0;
+	}
+
+#endif
+
+};
+
 
 void worker_write_to_disk(CxLog* _log)
 {

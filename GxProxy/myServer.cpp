@@ -161,7 +161,7 @@ void CxMyServer::close_cb(uv_handle_t* handle)
 	conn_rec* conn = container_of(handle, conn_rec, handle);
 	conn->client->SetFD(-1);
 	free(conn);
-	XLOG_WARN("客户端断开\n");
+	XLOG_WARN("客户端断开");
 }
 
 void CxMyServer::wait_for_while(uv_idle_t* handle)

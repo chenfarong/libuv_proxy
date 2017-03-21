@@ -88,10 +88,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../libuv/include;../LibXs;G:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../libuv/lib/Win32Debug;G:\Program Files (x86)\Visual Leak Detector\lib\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libuv.lib;Psapi.lib;Userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -161,6 +164,7 @@
     <ClCompile Include="..\LibXs\XString\StrUtil.cpp" />
     <ClCompile Include="..\LibXs\XString\utf8util.cpp" />
     <ClCompile Include="..\LibXs\XString\XStringEx.cpp" />
+    <ClCompile Include="..\LibXs\XTcpClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\GxProxy\GxProxy.h" />
@@ -187,6 +191,7 @@
     <ClInclude Include="..\LibXs\XString\utf8util.h" />
     <ClInclude Include="..\LibXs\XString\XString.h" />
     <ClInclude Include="..\LibXs\XString\XStringEx.h" />
+    <ClInclude Include="..\LibXs\XTcpClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

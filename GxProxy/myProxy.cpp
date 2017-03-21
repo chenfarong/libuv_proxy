@@ -80,8 +80,23 @@ CxTcpClientProxy* CxMyProxy::findWitchConnect(sockaddr_in _addr)
 
 CxTcpClientProxy* CxMyProxy::createWitchConnect(sockaddr_in _addr)
 {
-	CxTcpClientProxy* cli = new CxTcpClientProxy();
+	CxTcpClientProxy* cli = createClient();
 	cli->Open(_addr);
+	return cli;
+}
+
+CxTcpClientProxy* CxMyProxy::createClient()
+{
+	//从回收中找一个 如果没找到就新建
+	for (auto it : proxyConns.container)
+	{
+		if (!it->IsOnline()) {
+			XLOG_DEBUG("回收站重新使用");
+			return it;
+		}
+	}
+
+	CxTcpClientProxy* cli = new CxTcpClientProxy();
 	cli->SetDelegate(this);
 	proxyConns.safe_push_back(cli);
 	return cli;
@@ -90,8 +105,11 @@ CxTcpClientProxy* CxMyProxy::createWitchConnect(sockaddr_in _addr)
 void CxMyProxy::Recycle(CxTcpClientProxy* _cli)
 {
 	XX_ASSERT(_cli);
-	_cli->Close();
+	//_cli->Close();
 	//TODO 把这个放入回收站 等待重新被使用
+
+	_cli->SetFD(-1);
+
 
 }
 
@@ -162,6 +180,7 @@ void CxTcpClientProxy::Close()
 	uv_shutdown_t* sreq = (uv_shutdown_t*)malloc(sizeof *sreq);
 	XX_ASSERT(0 == uv_shutdown(sreq, connect_req.handle, shutdown_cb));
 
+	
 }
 
 struct sx_muv_read_q
@@ -188,6 +207,16 @@ void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 		goto lend;
 	}
 
+	//
+	CxTcpClientProxy* _cli = (CxTcpClientProxy*)req->data;
+
+	_cli->SetFD((int64)_cli->sock);
+
+	CxMyClient* _mcli = (CxMyClient*)_cli->cli;// ->m_proxy = _cli;
+	_mcli->m_proxy = _cli;
+
+
+
 	/* Shutdown on drain. */
 	//r = uv_shutdown(shutdown_req, stream, shutdown_cb);
 	//XX_ASSERT(r == 0);
@@ -201,9 +230,6 @@ void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 	}
 	XX_ASSERT(r == 0);
 
-	CxTcpClientProxy* _cli =(CxTcpClientProxy*) req->data;
-	CxMyClient* _mcli=(CxMyClient*)_cli->cli;// ->m_proxy = _cli;
-	_mcli->m_proxy = _cli;
 
 lend:
 //	free(req); //后面还要使用 成员属性 不得释放
@@ -232,8 +258,9 @@ void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_
 		if(_owner) _owner->Recv(buf->base, nread);
 	}
 	else {
-		XX_ASSERT(nread == UV_EOF);
-		printf("GOT EOF\n");
+//		XX_ASSERT(nread == UV_EOF);
+//		printf("GOT EOF\n");
+		XLOG_WARN("连接目标服务器断开");
 		uv_close((uv_handle_t*)stream, close_cb);
 	}
 

@@ -11,6 +11,7 @@
 #include "XNetBuffer.h"
 #include "XString/XString.h"
 #include "XLog.h"
+#include "myProxy.h"
 
 X_IMPL_SINSTANCE(CxMyClientPool)
 
@@ -18,6 +19,8 @@ X_IMPL_SINSTANCE(CxMyClientPool)
 CxMyClient::CxMyClient()
 {
 	m_delegate = NULL;
+	m_proxy = NULL;
+
 	Reset();
 	SetDelegate(this);
 }
@@ -28,8 +31,8 @@ void CxMyClient::Reset()
 	m_bSSL = false;
 	m_nState = 0;
 	m_iPrivilege = 0;
-	m_proxy = NULL;
 	m_input.clear();
+//	m_proxy = NULL;
 
 }
 
@@ -45,6 +48,13 @@ int CxMyClient::Open(sockaddr_in _addr)
 void CxMyClient::Close()
 {
 	Reset();
+
+	if (CxMyConfig::proxy_type == 0 && m_proxy)
+	{
+		//m_proxy->Close();
+		CxMyProxy::Instance()->Recycle((CxTcpClientProxy*)m_proxy);
+	}
+
 }
 
 void CxMyClient::Accept()
@@ -263,14 +273,18 @@ void CxTcpClient::SetFD(int64 fd)
 			//设置连接时间
 
 			//清除旧的输入缓冲
-			m_input.clear();
-
 			m_delegate->OnTcpOpen(this);
 		}
 		else {
 			m_delegate->OnTcpClose(this);
 		}
 	}
+
+	if (m_socket == -1) {
+		m_input.clear();
+		Close();
+	}
+
 }
 
 void CxTcpClient::SetDelegate(CxTcpDelegate* _delegate)
