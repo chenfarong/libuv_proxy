@@ -142,7 +142,7 @@ void CxMyServer::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_t* buf
 	//}
 
 
-	XX_ASSERT(nread == UV_EOF);
+//	XX_ASSERT(nread == UV_EOF);
 
 	
 

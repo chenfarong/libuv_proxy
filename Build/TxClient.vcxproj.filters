@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="LibXs">
+      <UniqueIdentifier>{c61c17de-d1e4-422c-96dd-d0230de9ce42}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\LibXs\xnet.cpp">
+      <Filter>LibXs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\LibXs\XTcpClient.cpp">
+      <Filter>LibXs</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\LibXs\xnet.h">
+      <Filter>LibXs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LibXs\XNetBuffer.h">
+      <Filter>LibXs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\LibXs\XTcpClient.h">
+      <Filter>LibXs</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
