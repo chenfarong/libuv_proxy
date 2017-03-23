@@ -1,4 +1,4 @@
-#ifndef myConfig_h__
+﻿#ifndef myConfig_h__
 #define myConfig_h__
 
 #include "config.h"

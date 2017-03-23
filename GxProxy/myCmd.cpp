@@ -1,10 +1,11 @@
-
+ï»¿
 #include "myCmd.h"
 #include "GxProxy.h"
 #include "myProxy.h"
 #include "uv.h"
 #include "xnet.h"
 #include "myConfig.h"
+#include "myServer.h"
 
 static const char* X_APP_VERSION = "GXPROXY 2017-03-19";
 
@@ -13,9 +14,11 @@ struct sx_cmd_t mycmds[]=
 	{"client",mycmd_client_list,1,1,"client list"},
 	{ "@!PROXY",mycmd_client_proxy,1,1,"PROXY <IP> <PORT>" },
 	{ "@!VER",mycmd_system_helo,0,0,"VER" },
+	{ "@!SHUTDOWN",mycmd_system_shoutdown,0,0,"SYSTEM_SHUTDOWN" },
+	
 };
 
-unsigned int mycmds_count=3;
+unsigned int mycmds_count=4;
 
 int mycmd_client_list(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
 {
@@ -30,8 +33,9 @@ int mycmd_client_list(CxMyClient* cli, const char* buf, int size, XTokenizer* to
 */
 int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
 {
-	//È¡µÃÄ¿±ê·þÎñÆ÷µØÖ· ºÍ¶Ë¿Ú È»ºóÁ¬½Ó
-	
+	//å–å¾—ç›®æ ‡æœåŠ¡å™¨åœ°å€ å’Œç«¯å£ ç„¶åŽè¿žæŽ¥
+	//return 0;
+
 	if (tok->NumLines() < 2)
 	{
 		//cli->SendPto();
@@ -42,11 +46,11 @@ int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* t
 	sockaddr_in _addr;
 	std::string _server = tok->GetValueStringByIndex(1);
 
-	//¹Ø±Õ
+	//å…³é—­
 	if (_server.compare("CLOSE") == 0)
 	{
 		if (cli->m_proxy) {
-			//TODO Èç¹ûÊÇ 1 ¶Ô 1 µÄ¾Í¹Ø±ÕÁ¬½Ó
+			//TODO å¦‚æžœæ˜¯ 1 å¯¹ 1 çš„å°±å…³é—­è¿žæŽ¥
 			if (CxMyConfig::proxy_type == 0)
 			{
 				CxMyProxy::Instance()->Recycle((CxTcpClientProxy*)cli->m_proxy);
@@ -64,7 +68,7 @@ int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* t
 	CxTcpClientProxy* _tcp =(CxTcpClientProxy*) CxMyProxy::Instance()->findWitchConnect(_addr);
 	XX_ASSERT(_tcp);
 	_tcp->cli = cli;
-//	cli->m_proxy = _tcp; //Õâ¸öÒªµÈÁ¬½Óºó²ÅÉèÖÃ
+//	cli->m_proxy = _tcp; //è¿™ä¸ªè¦ç­‰è¿žæŽ¥åŽæ‰è®¾ç½®
 
 	return 1;
 }
@@ -77,6 +81,13 @@ int mycmd_system_helo(CxMyClient* cli, const char* buf, int size, XTokenizer* to
 
 int mycmd_system_help(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
 {
+	return 1;
+}
+
+int mycmd_system_shoutdown(CxMyClient* cli, const char* buf, int size, XTokenizer* tok)
+{
+	cli->Close();
+	CxMyService::Shutdown();
 	return 1;
 }
 

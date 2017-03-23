@@ -355,7 +355,7 @@ int xnet_step(void* arg,xnet_sock s, xnet_recv_proc proc, char* recvBuf, int rec
 
 		if ((Total = select((int)s+1, &ReadSet, &WriteSet, &ExceptSet, &TimeOut)) == SOCKET_ERROR)
 		{
-			printf("select() returned with error %d\n", WSAGetLastError());
+			//printf("select() returned with error %d\n", WSAGetLastError());
 			return -1;
 		}
 		//else

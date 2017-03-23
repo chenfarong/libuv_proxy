@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of the CMaNGOS Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,14 +46,14 @@
             // Singleton Helpers
 			static void DestroySingleton() {
 				delete Singleton::si_instance;
-				Singleton::si_instance=NULL;
+				Singleton::si_instance=0;
 			}
 
             static T* si_instance;
     };
 
 
-#define X_IMPL_SINSTANCE(a) template<>##a* Singleton<##a>::si_instance = 0;
+#define X_IMPL_SINSTANCE(A) template<>A* Singleton<A>::si_instance = 0;
 
 
 #endif

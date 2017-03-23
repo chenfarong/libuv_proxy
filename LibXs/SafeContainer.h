@@ -1,4 +1,4 @@
-#ifndef xsafeContainer_h__
+﻿#ifndef xsafeContainer_h__
 #define xsafeContainer_h__
 
 #include <map>
@@ -9,6 +9,7 @@
 #include <vector>
 #include <queue>
 #include <deque>
+#include <assert.h>
 
 #define X_LOCK_GUARD(a) std::lock_guard<std::mutex> lck(a)
 
@@ -111,6 +112,14 @@ public:
 		return _k;
 	}
 
+	T& safe_pop_front()
+	{
+		std::lock_guard<std::mutex> lck(m_mutex);
+		assert(container.size() > 0);
+		T& val= container.front();
+		container.erase(container.begin());
+		return val;
+	}
 };
 
 

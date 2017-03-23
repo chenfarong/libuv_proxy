@@ -1,4 +1,4 @@
-#ifndef myProxy_h__
+ï»¿#ifndef myProxy_h__
 #define myProxy_h__
 
 #include "Singleton.h"
@@ -13,6 +13,7 @@ class CxTcpClientProxy : public CxTcpClient
 {
 public:
 	CxTcpClientProxy();
+	virtual ~CxTcpClientProxy();
 
 public:
 	virtual int Open(sockaddr_in _addr);
@@ -29,11 +30,11 @@ public:
 public:
 	CxTcpClient* cli;
 
-	//ÓÃÀ´Á¬½Ó
+	//ç”¨æ¥è¿æ¥
 	uv_tcp_t client;
 	uv_os_sock_t sock;
 
-	uv_connect_t connect_req; //Á¬½ÓÇëÇó
+	uv_connect_t connect_req; //è¿æ¥è¯·æ±‚
 };
 
 
@@ -52,7 +53,7 @@ public:
 
 public:
 	/**
-	»ñµÃÄ¿±ê·şÎñµÄ´úÀíÁ¬½Ó
+	è·å¾—ç›®æ ‡æœåŠ¡çš„ä»£ç†è¿æ¥
 	*/
 	CxTcpClientProxy* find(sockaddr_in _addr);
 	CxTcpClientProxy* findWitchConnect(sockaddr_in _addr);
@@ -63,8 +64,8 @@ public:
 
 protected:
 	/**
-	0 Ä¬ÈÏÖµ µ¥¶ÀµÄÒ»¸ösocketÁ¬½Óµ½Ä¿±ê·şÎñÆ÷
-	1 ¹²ÏíÒ»¸ösocketÓëÄ¿±ê·şÎñÆ÷Í¨ĞÅ
+	0 é»˜è®¤å€¼ å•ç‹¬çš„ä¸€ä¸ªsocketè¿æ¥åˆ°ç›®æ ‡æœåŠ¡å™¨
+	1 å…±äº«ä¸€ä¸ªsocketä¸ç›®æ ‡æœåŠ¡å™¨é€šä¿¡
 	*/
 	int proxy_type;
 	CxSafeVector<CxTcpClientProxy*> proxyConns;

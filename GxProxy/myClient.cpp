@@ -1,7 +1,7 @@
-
+ï»¿
 /*
 
-¿Í»§¶ËÒ»µ©Á¬½ÓÉÏÀ´£¬¾Í·¢ËÍÒ»¸ö»¶Ó­ĞÅÏ¢£º ¸æÖª°æ±¾ºÅ£¬ÊÇ·ñÆôÓÃÍ¨ĞÅ¼ÓÃÜ£¬²úÆ·ĞÅÏ¢
+å®¢æˆ·ç«¯ä¸€æ—¦è¿æ¥ä¸Šæ¥ï¼Œå°±å‘é€ä¸€ä¸ªæ¬¢è¿ä¿¡æ¯ï¼š å‘ŠçŸ¥ç‰ˆæœ¬å·ï¼Œæ˜¯å¦å¯ç”¨é€šä¿¡åŠ å¯†ï¼Œäº§å“ä¿¡æ¯
 
 */
 
@@ -12,176 +12,26 @@
 #include "XString/XString.h"
 #include "XLog.h"
 #include "myProxy.h"
+#include "uv.h"
+#include "myServer.h"
 
 X_IMPL_SINSTANCE(CxMyClientPool)
 
 
-CxMyClient::CxMyClient()
-{
-	m_delegate = NULL;
-	m_proxy = NULL;
-
-	Reset();
-	SetDelegate(this);
-}
-
-void CxMyClient::Reset()
-{
-
-	m_bSSL = false;
-	m_nState = 0;
-	m_iPrivilege = 0;
-	m_input.clear();
-//	m_proxy = NULL;
-
-}
-
-
-
-
-int CxMyClient::Open(sockaddr_in _addr)
-{
-
-	return 0;
-}
-
-void CxMyClient::Close()
-{
-	Reset();
-
-	if (CxMyConfig::proxy_type == 0 && m_proxy)
-	{
-		//m_proxy->Close();
-		CxMyProxy::Instance()->Recycle((CxTcpClientProxy*)m_proxy);
-	}
-
-}
-
-void CxMyClient::Accept()
-{
-	//TODO ·¢ËÍ»¶Ó­ĞÅÏ¢¸ø¿Í»§¶Ë
-}
-
-int CxMyClient::Send(const char* buf, int size)
-{
-
-	//TODO ¸ù¾İ×Ô¼ºÊÇ·ñ½øĞĞ¼ÓÃÜ ½øĞĞ¼ÓÃÜ¶øºó·¢ËÍ
-	Encrypto((char*)buf, size);
-
-	//TODO ÕâÀïÈç¹ûÔÚ¸ü»»ÃÜÔ¿µÄÊ±ºòÒª½øĞĞµÈ´ı
-
-	//return CxTcpClient::Send(buf, size);
-
-	write_req_t * wr = (write_req_t*)malloc(sizeof *wr);
-	XX_ASSERT(wr != NULL);
-	wr->buf = uv_buf_init((char*)buf, size);
-
-	if (uv_write(&wr->req, (uv_stream_t*)handle, &wr->buf, 1, 0)) 
-	{
-		XX_FATAL("uv_write failed");
-	}
-	return size;
-}
-
-void CxMyClient::Decrypto(char* buf, int size)
-{
-	//ÕâÀï¼Ó½âÃÜ²»Ôö¼õ³¤¶È
-}
-
-void CxMyClient::Encrypto(char* buf, int size)
-{
-	//ÕâÀï¼Ó½âÃÜ²»Ôö¼õ³¤¶È
-}
-
-void CxMyClient::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
-{
-}
-
-void CxMyClient::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
-{
-	
-	if (sender == this) 
-	{
-		//ÊÇ´Ó¿Í»§¶ËÄÇ±ßÊÕÀ´µÄ
-
-		//ÅĞ¶ÏÊÇ·ñ½øĞĞ½âÃÜ 
-		Decrypto((char*)buf, size);
-
-		//Ö´ĞĞ±¾µØÃüÁî
-		if (0 != DoCmd(buf, size)) return;
-
-		//Ïò´úÀíÁ¬½Ó·¢ËÍÊı¾İ Ç°Ãæ¸ù¾İÊÇ·ñ¹²ÏíÀ´¾ö¶¨ÊÇ·ñ¼ÓÄÚÈİ Õâ¸ö²Ù×÷ÔÚ´úÀíÄÇ±ßÊµÏÖ
-		if (m_proxy) m_proxy->SendPto(buf, size);
-
-	}
-	else {
-		//´ÓÄ¿±ê·şÎñÆ÷À´µÄÊı¾İ
-		//ÔÚ´úÀíÄÇ±ßÒÑ¾­°ÑË­µÄ½øĞĞ°şÀëÁË
-		Send(buf, size);
-	}
-
-}
-
-CxMyClientPool::~CxMyClientPool()
-{
-	for (auto it : fd_clients.container)
-	{
-		delete it.second;
-	}
-	fd_clients.container.clear();
-}
-
-void CxMyClientPool::Init(uint _client_max/*=1024*/,unsigned int _client_start)
-{
-	for (uint i = _client_start; i < _client_max; i++)
-		findClientByFD(i, true);
-}
-
-void CxMyClientPool::CheckClientOnline()
-{
-	return;
-
-	time_t _nowSecond = time(NULL);
-	XLOG_DEBUG("%d",(int)_nowSecond);
-	for (auto it : fd_clients.container)
-	{
-		
-	}
-//	if (difftime(_nowSecond - m_last_check_time) > 5
-
-}
-
-void CxMyClientPool::Step()
-{
-	time_t _nowSecond = time(NULL);
-	
-	// 1 Ãë ×öÒ»´ÎÑ²²é¿Í»§¶ËÊÇ·ñ¶¼ÔÚÏß
-	if (difftime(_nowSecond , m_last_check_time) >= 1) {
-		CheckClientOnline();
-		m_last_check_time = _nowSecond;
-	}
-
-	//3·ÖÖÓ×öÒ»´Î¶¯Ì¬Í¨ĞÅ¼ÓÃÜ±ä»»
-}
-
-CxMyClient* CxMyClientPool::findClientByFD(int64 fd, bool _create)
-{
-	auto it = fd_clients.container.find(fd);
-	if (it != fd_clients.container.end()) return it->second;
-
-	if (!_create) return NULL;
-
-	CxMyClient* cli = new CxMyClient();
-	cli->SetFD(fd);
-	fd_clients.SafeAppend(fd, cli);
-	return cli;
-}
+//////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////
 
 CxTcpClient::CxTcpClient()
 {
 	m_socket = -1;
 	pto_type = 1;
 	m_delegate = NULL;
+}
+
+CxTcpClient::~CxTcpClient()
+{
+	Close();
 }
 
 int CxTcpClient::Open(sockaddr_in _addr)
@@ -191,7 +41,7 @@ int CxTcpClient::Open(sockaddr_in _addr)
 
 void CxTcpClient::Close()
 {
-
+	if (m_delegate) m_delegate->OnTcpClose(this);
 }
 
 int CxTcpClient::Send(const char* buf, int size)
@@ -206,7 +56,7 @@ int CxTcpClient::SendPto(const char* buf, int size)
 {
 	CxNetBuffer buffer;
 	if (pto_type) {
-		buffer.WritefixEMark(buf, size, "\r\n\r\n", 4);
+		buffer.WritefixEMark2(buf, size, "\r\n\r\n", 4);
 	}
 	else {
 		buffer.WritefixP32(buf, size);
@@ -221,7 +71,7 @@ int CxTcpClient::Recv(const char* buf, int size)
 
 	m_input.write(buf, size);
 
-	//ÕâÀï½øĞĞÊı¾İ°üÍêÕûºóÖ´ĞĞ
+	//è¿™é‡Œè¿›è¡Œæ•°æ®åŒ…å®Œæ•´åæ‰§è¡Œ
 
 	while (1)
 	{
@@ -230,7 +80,7 @@ int CxTcpClient::Recv(const char* buf, int size)
 		if (pto_type == 1)
 		{
 			chunk = m_input.getChunkEMark("\r\n\r\n", 4);
-			if(chunk) nsize = chunk->length() - 4;
+			if (chunk) nsize = chunk->length() - 4;
 		}
 		else
 		{
@@ -238,15 +88,17 @@ int CxTcpClient::Recv(const char* buf, int size)
 			if (chunk) nsize = chunk->length();
 		}
 
-		if(chunk==NULL) break;
+		if (chunk == NULL) break;
 
-		if (m_delegate && nsize>0) m_delegate->OnTcpRecv(this, chunk->c_str(), nsize);
+		XLOG_DEBUG("æ•°æ®åŒ…:%d",nsize);
+
+		if (m_delegate && nsize > 0) m_delegate->OnTcpRecv(this, chunk->c_str(), nsize);
 
 		//
 		//if (0 != DoCmd(chunk->c_str(), chunk->length())) {
 		//}
 		//else {
-		//	//ÁÙÊ±Ö±½Ó·¢ËÍ»Ø¸ø¿Í»§¶Ë
+		//	//ä¸´æ—¶ç›´æ¥å‘é€å›ç»™å®¢æˆ·ç«¯
 		//	SendPto(chunk->c_str(), chunk->length());
 		//}
 
@@ -259,7 +111,7 @@ int CxTcpClient::Recv(const char* buf, int size)
 
 bool CxTcpClient::IsOnline()
 {
-	return m_socket >0;
+	return m_socket > 0;
 }
 
 void CxTcpClient::SetFD(int64 fd)
@@ -270,9 +122,9 @@ void CxTcpClient::SetFD(int64 fd)
 
 	if (m_delegate) {
 		if (IsOnline()) {
-			//ÉèÖÃÁ¬½ÓÊ±¼ä
+			//è®¾ç½®è¿æ¥æ—¶é—´
 
-			//Çå³ı¾ÉµÄÊäÈë»º³å
+			//æ¸…é™¤æ—§çš„è¾“å…¥ç¼“å†²
 			m_delegate->OnTcpOpen(this);
 		}
 		else {
@@ -282,7 +134,7 @@ void CxTcpClient::SetFD(int64 fd)
 
 	if (m_socket == -1) {
 		m_input.clear();
-		Close();
+		//Close();
 	}
 
 }
@@ -292,8 +144,156 @@ void CxTcpClient::SetDelegate(CxTcpDelegate* _delegate)
 	m_delegate = _delegate;
 }
 
+//////////////////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////////////////
+
+CxMyClient::CxMyClient()
+{
+	m_delegate = NULL;
+	m_proxy = NULL;
+
+	Reset();
+	SetDelegate(this);
+	handle = NULL;
+//	conn = NULL;
+//	handle.data = this;
+}
+
+CxMyClient::~CxMyClient()
+{
+	//ä¸´æ—¶ ä»¥ä¸‹ä»£ç å´©æºƒ
+	//conn_rec* conn = container_of(this, conn_rec,client);
+	//free(conn);
+}
+
+void CxMyClient::Reset()
+{
+	m_bSSL = false;
+	m_nState = 0;
+	m_iPrivilege = 0;
+	m_input.clear();
+
+}
+
+
+//void CxMyClient::shutdown_cb(uv_shutdown_t* req, int status)
+//{
+//	free(req);
+//	//uv_close((uv_handle_t*)req->handle, close_cb);
+//}
+//
+//void CxMyClient::close_cb(uv_handle_t* handle)
+//{
+//	XLOG_WARN("å®¢æˆ·ç«¯æ–­å¼€");
+//}
+
+
+int CxMyClient::Open(sockaddr_in _addr)
+{
+
+	return 0;
+}
+
+void CxMyClient::Close()
+{
+	//TODO å¦‚æœè¿æ¥çŠ¶æ€å°±å…³é—­æ‰
+	if (IsOnline() /*&& conn*/) {
+		//int r = uv_shutdown(&conn->shutdown_req, (uv_stream_t*)handle, CxMyServer::shutdown_cb);
+		//XX_ASSERT(r == 0);
+		uv_close((uv_handle_t*)handle, CxMyServer::close_cb);
+	}
+}
+
+void CxMyClient::Accept()
+{
+	//TODO å‘é€æ¬¢è¿ä¿¡æ¯ç»™å®¢æˆ·ç«¯
+}
+
+int CxMyClient::Send(const char* buf, int size)
+{
+	if (!IsOnline()) return 0; //å¼‚å¸¸æ–­å¼€ å°±ä¸è¦å‘é€äº†
+
+	//TODO æ ¹æ®è‡ªå·±æ˜¯å¦è¿›è¡ŒåŠ å¯† è¿›è¡ŒåŠ å¯†è€Œåå‘é€
+	Encrypto((char*)buf, size);
+
+	//TODO è¿™é‡Œå¦‚æœåœ¨æ›´æ¢å¯†é’¥çš„æ—¶å€™è¦è¿›è¡Œç­‰å¾…
+
+	//return CxTcpClient::Send(buf, size);
+
+	write_req_t * wr = new write_req_t();// (write_req_t*)malloc(sizeof *wr);
+	XX_ASSERT(wr != NULL);
+	wr->buf = uv_buf_init((char*)buf, size);
+
+	if (uv_write(&wr->req, (uv_stream_t*)handle, &wr->buf, 1, CxMyClient::write_cb))
+	{
+//		XX_FATAL("uv_write failed");
+		XLOG_WARN("å®¢æˆ·ç«¯ä¸»åŠ¨å…³é—­äº†");
+		//Close();
+		SetFD(-1);
+	}
+	return size;
+}
+
+void CxMyClient::SetFD(int64 fd)
+{
+	CxTcpClient::SetFD(fd);
+	if (fd == -1) {
+		if (CxMyConfig::proxy_type == 0 && m_proxy)
+		{
+			CxMyProxy::Instance()->Recycle((CxTcpClientProxy*)m_proxy);
+		}
+		m_proxy = NULL;
+	}
+}
+
+void CxMyClient::Decrypto(char* buf, int size)
+{
+	//è¿™é‡ŒåŠ è§£å¯†ä¸å¢å‡é•¿åº¦
+}
+
+void CxMyClient::Encrypto(char* buf, int size)
+{
+	//è¿™é‡ŒåŠ è§£å¯†ä¸å¢å‡é•¿åº¦
+}
+
+void CxMyClient::write_cb(uv_write_t* req, int status)
+{
+	write_req_t* wr = (write_req_t*)req;// container_of(req, write_req_t, req);
+	delete wr;
+}
+
+void CxMyClient::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
+{
+}
+
+void CxMyClient::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
+{
+	
+	if (sender == this) 
+	{
+		//æ˜¯ä»å®¢æˆ·ç«¯é‚£è¾¹æ”¶æ¥çš„
+
+		//åˆ¤æ–­æ˜¯å¦è¿›è¡Œè§£å¯† 
+		Decrypto((char*)buf, size);
+
+		//æ‰§è¡Œæœ¬åœ°å‘½ä»¤
+		if (0 != DoCmd(buf, size)) return;
+
+		//å‘ä»£ç†è¿æ¥å‘é€æ•°æ® å‰é¢æ ¹æ®æ˜¯å¦å…±äº«æ¥å†³å®šæ˜¯å¦åŠ å†…å®¹ è¿™ä¸ªæ“ä½œåœ¨ä»£ç†é‚£è¾¹å®ç°
+		if (m_proxy) m_proxy->SendPto(buf, size);
+		else SendPto(buf, size); //è¿”å›ç»™å®¢æˆ·ç«¯
+	}
+	else {
+		//ä»ç›®æ ‡æœåŠ¡å™¨æ¥çš„æ•°æ®
+		//åœ¨ä»£ç†é‚£è¾¹å·²ç»æŠŠè°çš„è¿›è¡Œå‰¥ç¦»äº†
+		Send(buf, size);
+	}
+
+}
+
 /**
-Ö´ĞĞÃüÁî
+æ‰§è¡Œå‘½ä»¤
 */
 int CxMyClient::DoCmd(const char* buf, unsigned int size)
 {
@@ -318,11 +318,100 @@ int CxMyClient::DoCmd(const char* buf, unsigned int size)
 }
 
 /**
-Ïò¿Í»§¶Ë·¢ËÍĞÂµÄ¼ÓÃÜÃÜÔ¿
+å‘å®¢æˆ·ç«¯å‘é€æ–°çš„åŠ å¯†å¯†é’¥
 */
 void CxMyClient::SetCryptoKey(std::string _key)
 {
-	//µÈÊÕµ½¿Í»§¶ËĞÂÃÜÔ¿ÉèÖÃ³É¹¦ºó²ÅÓÃĞÂµÄÃÜÔ¿½øĞĞÍ¨ĞÅ
-	//ÔÚÃÜÔ¿ÎÕÊÖ½×¶Î ·¢ËÍ¸ø¿Í»§¶ËµÄÊı¾İ¶¼ÏÈÑ¹Èë´ı·¢ËÍ¶ÓÁĞÖĞ
+	//ç­‰æ”¶åˆ°å®¢æˆ·ç«¯æ–°å¯†é’¥è®¾ç½®æˆåŠŸåæ‰ç”¨æ–°çš„å¯†é’¥è¿›è¡Œé€šä¿¡
+	//åœ¨å¯†é’¥æ¡æ‰‹é˜¶æ®µ å‘é€ç»™å®¢æˆ·ç«¯çš„æ•°æ®éƒ½å…ˆå‹å…¥å¾…å‘é€é˜Ÿåˆ—ä¸­
+}
+
+
+CxMyClientPool::~CxMyClientPool()
+{
+	for (auto it : fd_clients.container)
+	{
+		delete it.second;
+	}
+	fd_clients.container.clear();
+
+	//
+	for (auto it : clients.container)
+	{
+		delete it;
+	}
+	clients.container.clear();
+
+}
+
+void CxMyClientPool::Init(uint _client_max/*=1024*/,unsigned int _client_start)
+{
+	for (uint i = _client_start; i < _client_max; i++)
+		findClientByFD(i, true);
+}
+
+conn_rec* CxMyClientPool::NewConn()
+{
+	if (clients.container.size() > 0) {
+		return clients.safe_pop_front();
+	}
+	return new conn_rec();
+}
+
+void CxMyClientPool::DeleteConn(conn_rec* _conn)
+{
+	clients.safe_push_back(_conn);
+}
+
+void CxMyClientPool::CheckClientOnline()
+{
+	return;
+
+	time_t _nowSecond = time(NULL);
+	XLOG_DEBUG("%d",(int)_nowSecond);
+	for (auto it : fd_clients.container)
+	{
+		
+	}
+//	if (difftime(_nowSecond - m_last_check_time) > 5
+
+}
+
+void CxMyClientPool::Step()
+{
+	time_t _nowSecond = time(NULL);
+	
+	// 1 ç§’ åšä¸€æ¬¡å·¡æŸ¥å®¢æˆ·ç«¯æ˜¯å¦éƒ½åœ¨çº¿
+	if (difftime(_nowSecond , m_last_check_time) >= 1) {
+		CheckClientOnline();
+		m_last_check_time = _nowSecond;
+	}
+
+	//3åˆ†é’Ÿåšä¸€æ¬¡åŠ¨æ€é€šä¿¡åŠ å¯†å˜æ¢
+}
+
+CxMyClient* CxMyClientPool::findClientByFD(int64 fd, bool _create)
+{
+	return NULL;
+
+	auto it = fd_clients.container.find(fd);
+	if (it != fd_clients.container.end()) {
+		return it->second;
+	}
+
+	if (!_create) return NULL;
+
+	CxMyClient* cli = new CxMyClient();
+	//cli->SetFD(fd);
+	fd_clients.SafeAppend(fd, cli);
+	return cli;
+}
+
+void CxMyClientPool::DisconnectAll()
+{
+	for (auto it : fd_clients.container)
+	{
+		it.second->Close();
+	}
 }
 

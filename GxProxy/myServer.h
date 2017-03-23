@@ -1,4 +1,4 @@
-#ifndef myServer_h__
+﻿#ifndef myServer_h__
 #define myServer_h__
 
 #include "uv.h"
@@ -40,6 +40,21 @@ protected:
 
 };
 
+
+class CxMyService
+{
+public:
+	static void OnStart();
+	static void OnStop();
+
+	static void Shutdown();
+
+	/**
+	服务器状态改变的时候
+	*/
+	static void OnChangeStatus(int64 status);
+
+};
 
 
 #endif // myServer_h__

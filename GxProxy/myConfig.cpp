@@ -1,4 +1,4 @@
-
+ï»¿
 #include "myConfig.h"
 
 
@@ -15,10 +15,10 @@ CxMyConfig::CxMyConfig()
 	SetAttrib("server", "port", "5454");
 	SetAttrib("server", "ssl_enable", "0");
 	SetAttrib("server", "ssl_port", "4545");
-	SetAttrib("server", "proxy_type", "1"); //Ä¬ÈÏÒ»¸ö¿Í»§¶ËÒ»¸ö´úÀíÁ¬½Ó
+	SetAttrib("server", "proxy_type", "1"); //é»˜è®¤ä¸€ä¸ªå®¢æˆ·ç«¯ä¸€ä¸ªä»£ç†è¿æ¥
 
-	SetAttrib("client", "timeout", "30");			//¿Í»§¶ËÈç¹û30ÃëÃ»ÓĞ·¢ËÍÏûÏ¢ÉÏÀ´¾ÍÖ÷¶¯¶Ï¿ªËü Èç¹ûÊÇ0¾Í²»¹ÜÕâÊÂ
-	SetAttrib("client", "net_buf_size", "40960");	//½ÓÊÕÊı¾İ»º³åÇø
+	SetAttrib("client", "timeout", "30");			//å®¢æˆ·ç«¯å¦‚æœ30ç§’æ²¡æœ‰å‘é€æ¶ˆæ¯ä¸Šæ¥å°±ä¸»åŠ¨æ–­å¼€å®ƒ å¦‚æœæ˜¯0å°±ä¸ç®¡è¿™äº‹
+	SetAttrib("client", "net_buf_size", "40960");	//æ¥æ”¶æ•°æ®ç¼“å†²åŒº
 }
 
 

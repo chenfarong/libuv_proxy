@@ -30,6 +30,8 @@ typedef std::vector<uint8> xarray_uint8;
 
 #define X_CLRF2_C "&#13;&#10;&#13;&#10;"
 
+//#define X_CLRF2_SIZE  strlen(X_CLRF2_C)
+
 class CxNetBufferHelper
 {
 public:
@@ -48,6 +50,37 @@ public:
 		des.resize(des.size() + size);
 		memcpy(&des[op], buf, size);
 	}
+
+	static bool x_str_include(const char* _des, unsigned int _size, char c)
+	{
+		for (unsigned int i = 0; i < _size; i++) if (_des[i] == c) return true;
+		return false;
+	}
+
+	static std::string x_str_255t(char c)
+	{
+		//&#13;
+		char buf[32];
+		sprintf(buf, "&#%d;", (int)c);
+		return buf;
+	}
+
+//#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
+
+	static char x_str_255f(std::string s)
+	{
+		int r = 0;
+		//找到第一个&# 找到第一个数字后第一个不是数字
+		int _posL = s.find("&#");
+		int _posR = s.find(";", _posL);
+		if (_posL != -1 && _posR != -1)
+		{
+			std::string a = s.substr(_posL + 2, _posR - _posL - 2);
+			r = atoi(a.c_str());
+		}
+		return (char)r;
+	}
+
 };
 
 class CxDChunk
@@ -299,6 +332,8 @@ public:
             }else des.push_back(dat[i]);
         }
         
+		//处理末尾字符 如果最后是 &#13; &#10; 那么就替换掉
+
         resize(des.size());
         memcpy(dat, (char*)&des[0], des.size());
     }
@@ -530,7 +565,7 @@ public:
 	}
     
     
-    CxDChunk*  getChunkEMarkEx(const char* _endmark,size_t _size)
+    CxDChunk*  getChunkEMark2(const char* _endmark,size_t _size)
     {
         std::lock_guard<std::mutex> lck(mtx_class);
         
@@ -558,9 +593,9 @@ public:
         int ns = (int)(k+ml-_rpos);
         
         CxDChunkEMark* chunk = new CxDChunkEMark(/*getReaderPtr(), ns*/);
-        chunk->SetData(getReaderPtr(), ns);
+        chunk->SetData(getReaderPtr(), ns-ml);
         rposInc(ns);
-        chunk->ReadPackageFix2(_endmark, (int)_size);
+        chunk->ReadPackageFix(_endmark, (int)_size);
         
         return chunk;
     }
@@ -587,6 +622,63 @@ public:
 		_rpos = 0;
 		_wpos = chunk.length();
 	}
+
+	/**
+	看内容中是否有完整的后缀保留串，如果是转换
+	最后一个字母是否为后缀中的保留字 如果是转换
+	*/
+	void WritefixEMark2(const char* _dat, unsigned int _size, const char* _emark, int _emark_len)
+	{
+		if(_size < 1) return;
+
+		if(_emark==NULL) _emark="\r\n\r\n";
+		if (_emark_len < 1) _emark_len = strlen(_emark);
+
+		resize(_size*2);
+		int l = _size - _emark_len;
+
+		if (l > 0)
+		{
+			size_t mss = strlen(X_CLRF2_C);
+
+			for (unsigned int i = 0; i < l; i++)
+			{
+				if (CxNetBufferHelper::x_str_first(_dat + 1, _emark, _emark_len))
+				{
+					write(X_CLRF2_C, (int)mss);
+					i += (_emark_len - 1);
+				}
+				else {
+					data[i] = _dat[i];
+					_wpos++;
+				}
+			}//--for
+
+
+			//处理最后几个字符
+			write(_dat + l, _emark_len - 1);
+		}
+		else {
+			write(_dat, _size - 1);
+		}
+
+		//处理最后一个字符
+		char lastC = _dat[_size - 1];
+		if (CxNetBufferHelper::x_str_include(_emark, _emark_len,lastC ))
+		{
+			//
+			std::string s = CxNetBufferHelper::x_str_255t(_dat[_size - 1]);
+			write(s.c_str(), s.length());
+		}
+		else write(&lastC, 1);
+
+		//加上末尾标记
+		write(_emark, _emark_len);
+
+	}
+
+
+
 #endif
 
 

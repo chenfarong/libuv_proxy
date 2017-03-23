@@ -1,7 +1,7 @@
-
+ï»¿
 #include "GxProxy.h"
 #include "myProxy.h"
-
+#include "uv.h"
 
 X_IMPL_SINSTANCE(CxMyProxy)
 
@@ -23,26 +23,29 @@ CxMyProxy::~CxMyProxy()
 
 void CxMyProxy::OnTcpSend(CxTcpClient* sender, const char* buf, int size)
 {
-	//TODO ¸ù¾ÝÀàÐÍ ¿´¿´ÊÇ·ñÒª¼ÓÉÏÇ°±ßµÄ¿Í»§¶Ë±ê¼Ç
+	//TODO æ ¹æ®ç±»åž‹ çœ‹çœ‹æ˜¯å¦è¦åŠ ä¸Šå‰è¾¹çš„å®¢æˆ·ç«¯æ ‡è®°
 
 	CxTcpClientProxy* conn = (CxTcpClientProxy*)sender;
 	uv_stream_t* stream = (uv_stream_t*)&conn->client;
 
 	write_req_t * wr = (write_req_t*)malloc(sizeof *wr);
 	XX_ASSERT(wr != NULL);
-	wr->buf = uv_buf_init((char*)buf, size); //ÕâÀïÃ»ÓÐÉêÇëÐÂµÄÄÚ´æ
+	wr->buf = uv_buf_init((char*)buf, size); //è¿™é‡Œæ²¡æœ‰ç”³è¯·æ–°çš„å†…å­˜
 
 	int r = uv_write(&wr->req, stream, &wr->buf, 1, CxTcpClientProxy::write_cb);
 	if (r!=0)
 	{
-		XX_FATAL("uv_write failed");
+		//XX_FATAL("uv_write failed");
+		XLOG_ERROR("uv_write failed");
+		conn->SetFD(-1);
 	}
 
 }
 
 void CxMyProxy::OnTcpRecv(CxTcpClient* sender, const char* buf, int size)
 {
-	//¸ù¾ÝÀàÐÍ ¿´¿´ÊÇ·ñÒª°þÀëÇ°±ßµÄ¿Í»§¶Ë±ê¼Ç
+	XLOG_WARN("ç›®æ ‡æœåŠ¡å™¨æ•°æ®:%d",size);
+	//æ ¹æ®ç±»åž‹ çœ‹çœ‹æ˜¯å¦è¦å‰¥ç¦»å‰è¾¹çš„å®¢æˆ·ç«¯æ ‡è®°
 	if (proxy_type == 0) {
 		CxTcpClientProxy* _tcp = (CxTcpClientProxy*)sender;
 		if (_tcp->cli) _tcp->cli->SendPto(buf, size);
@@ -87,15 +90,16 @@ CxTcpClientProxy* CxMyProxy::createWitchConnect(sockaddr_in _addr)
 
 CxTcpClientProxy* CxMyProxy::createClient()
 {
-	//´Ó»ØÊÕÖÐÕÒÒ»¸ö Èç¹ûÃ»ÕÒµ½¾ÍÐÂ½¨
+	//ä»Žå›žæ”¶ä¸­æ‰¾ä¸€ä¸ª å¦‚æžœæ²¡æ‰¾åˆ°å°±æ–°å»º
 	for (auto it : proxyConns.container)
 	{
 		if (!it->IsOnline()) {
-			XLOG_DEBUG("»ØÊÕÕ¾ÖØÐÂÊ¹ÓÃ");
+			XLOG_DEBUG("å›žæ”¶ç«™é‡æ–°ä½¿ç”¨");
 			return it;
 		}
 	}
 
+	XLOG_DEBUG("æ–°å»ºä»£ç†");
 	CxTcpClientProxy* cli = new CxTcpClientProxy();
 	cli->SetDelegate(this);
 	proxyConns.safe_push_back(cli);
@@ -104,18 +108,35 @@ CxTcpClientProxy* CxMyProxy::createClient()
 
 void CxMyProxy::Recycle(CxTcpClientProxy* _cli)
 {
+	int r = 0;
+
 	XX_ASSERT(_cli);
-	//_cli->Close();
-	//TODO °ÑÕâ¸ö·ÅÈë»ØÊÕÕ¾ µÈ´ýÖØÐÂ±»Ê¹ÓÃ
+	_cli->Close();
+	//TODO æŠŠè¿™ä¸ªæ”¾å…¥å›žæ”¶ç«™ ç­‰å¾…é‡æ–°è¢«ä½¿ç”¨
 
-	_cli->SetFD(-1);
+	//_cli->SetFD(-1);
+	//proxyConns.safe_remove(_cli); //å¯ä»¥ä½¿ç”¨å›žæ”¶ç«™
+
+	//è¿™é‡Œç›´æŽ¥æ–­å¼€ä¼šå¯¼è‡´å´©æºƒ
+	//#ifdef _WIN32
+	//	r = closesocket(_cli->sock);
+	//#else
+	//	r = close(_cli->sock);
+	//#endif
 
 
+	//uv_tcp_close(uv_default_loop(), &_cli->client);
 }
 
 CxTcpClientProxy::CxTcpClientProxy()
 {
 	cli = NULL;
+}
+
+CxTcpClientProxy::~CxTcpClientProxy()
+{
+	//uv_tcp_close(uv_default_loop(), &client);
+
 }
 
 static uv_os_sock_t create_tcp_socket(void) {
@@ -162,7 +183,7 @@ int CxTcpClientProxy::Open(sockaddr_in _addr)
 		CxTcpClientProxy::connect_cb);
 	XX_ASSERT(r == 0);
 
-	//ÕâÀïÒ»¸ö´úÀíºÍ¿Í»§¶Ë°ó¶¨µÄÊÂ¼þ
+	//è¿™é‡Œä¸€ä¸ªä»£ç†å’Œå®¢æˆ·ç«¯ç»‘å®šçš„äº‹ä»¶
 
 	return 0;
 }
@@ -180,7 +201,8 @@ void CxTcpClientProxy::Close()
 	uv_shutdown_t* sreq = (uv_shutdown_t*)malloc(sizeof *sreq);
 	XX_ASSERT(0 == uv_shutdown(sreq, connect_req.handle, shutdown_cb));
 
-	
+	//m_socket = -1;
+	//SetFD(-1);
 }
 
 struct sx_muv_read_q
@@ -200,19 +222,22 @@ void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 	int r = 0;
 	uv_stream_t* stream = req->handle;
 	stream->data = req->data;
+	CxTcpClientProxy* _cli=NULL;
+	CxMyClient* _mcli = NULL;
 
 	if (status != 0)
 	{
-		XLOG_WARN("Á¬½ÓÊ§°Ü");
-		goto lend;
+		XLOG_WARN("è¿žæŽ¥å¤±è´¥");
+		return;
 	}
 
 	//
-	CxTcpClientProxy* _cli = (CxTcpClientProxy*)req->data;
-
+	_cli = (CxTcpClientProxy*)req->data;
+	XX_ASSERT(_cli);
 	_cli->SetFD((int64)_cli->sock);
 
-	CxMyClient* _mcli = (CxMyClient*)_cli->cli;// ->m_proxy = _cli;
+	_mcli = (CxMyClient*)_cli->cli;// ->m_proxy = _cli;
+	XX_ASSERT(_mcli);
 	_mcli->m_proxy = _cli;
 
 
@@ -225,15 +250,15 @@ void CxTcpClientProxy::connect_cb(uv_connect_t* req, int status)
 	r = uv_read_start(stream, CxTcpClientProxy::alloc_cb, CxTcpClientProxy::read_cb);
 	if (r != 0) {
 		XLOG_ERROR("%s", uv_err_name(r));
-		//Á¬½Ó·þÎñÆ÷Ê§°Ü 
-		goto lend;
+		//è¿žæŽ¥æœåŠ¡å™¨å¤±è´¥ 
+		return;
 	}
 	XX_ASSERT(r == 0);
 
 
-lend:
-//	free(req); //ºóÃæ»¹ÒªÊ¹ÓÃ ³ÉÔ±ÊôÐÔ ²»µÃÊÍ·Å
-	XLOG_DEBUG("³É¹¦Á¬½Ó");
+//lend:
+//	free(req); //åŽé¢è¿˜è¦ä½¿ç”¨ æˆå‘˜å±žæ€§ ä¸å¾—é‡Šæ”¾
+	XLOG_DEBUG("æˆåŠŸè¿žæŽ¥");
 }
 
 void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
@@ -245,7 +270,7 @@ void CxTcpClientProxy::write_cb(uv_write_t* req, int status)
 
 	write_req_t* wr = (write_req_t*)req;
 
-//	free(wr->buf.base); //ÊÍ·ÅÄÚ´æ µ¼ÖÂ±ÀÀ£
+//	free(wr->buf.base); //é‡Šæ”¾å†…å­˜ å¯¼è‡´å´©æºƒ
 	free(req);
 }
 
@@ -260,11 +285,11 @@ void CxTcpClientProxy::read_cb(uv_stream_t* stream, ssize_t nread, const uv_buf_
 	else {
 //		XX_ASSERT(nread == UV_EOF);
 //		printf("GOT EOF\n");
-		XLOG_WARN("Á¬½ÓÄ¿±ê·þÎñÆ÷¶Ï¿ª");
+		XLOG_WARN("è¿žæŽ¥ç›®æ ‡æœåŠ¡å™¨æ–­å¼€");
 		uv_close((uv_handle_t*)stream, close_cb);
 	}
 
-	free(buf->base); //ÊÍ·ÅÄÚ´æ
+	free(buf->base); //é‡Šæ”¾å†…å­˜
 }
 
 void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)
@@ -275,9 +300,14 @@ void CxTcpClientProxy::shutdown_cb(uv_shutdown_t* req, int status)
 
 void CxTcpClientProxy::close_cb(uv_handle_t* handle)
 {
-	//ÊÍ·ÅÄÚ´æÖØÒª
+	//é‡Šæ”¾å†…å­˜é‡è¦
 	CxTcpClientProxy* _self = (CxTcpClientProxy*)handle->data;
-	if(_self) _self->SetFD(-1);
+	if (_self) {
+		_self->SetFD(-1);
+#if(0)
+		delete _self;
+#endif
+	}
 }
 
 void CxTcpClientProxy::alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)

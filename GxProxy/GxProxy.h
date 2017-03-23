@@ -1,4 +1,4 @@
-#ifndef GxProxy_h__
+﻿#ifndef GxProxy_h__
 #define GxProxy_h__
 
 #include <thread>

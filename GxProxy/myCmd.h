@@ -1,16 +1,16 @@
-#ifndef myCmd_h__
+ï»¿#ifndef myCmd_h__
 #define myCmd_h__
 
 /*
-@!CLIENT ECHO ·µ»Ø¿Í»§¶Ë·¢ËÍµÄÄÚÈİ
-@!CLIENT LIST Á¬½Ó¿Í»§¶ËÁĞ±í
-@!CLIENT KICK Ç¿ÖÆ¶Ï¿ª¿Í»§¶Ë
-@!CLIENT NAME ¸øÁ¬½Ó¿Í»§¶ËÃüÃû ÉèÖÃÎªÕËºÅÃû³Æ
-@!CLIENT LOGIN ¿Í»§¶ËµÇÂ¼ ÓÃ»§Ãû+ÃÜÂë
-@!CLIENT LOGIN_EX ÓÃ»§Ãû+»á»°ºÅ
-@!CLIENT SU È¨ÏŞÌáÉı
+@!CLIENT ECHO è¿”å›å®¢æˆ·ç«¯å‘é€çš„å†…å®¹
+@!CLIENT LIST è¿æ¥å®¢æˆ·ç«¯åˆ—è¡¨
+@!CLIENT KICK å¼ºåˆ¶æ–­å¼€å®¢æˆ·ç«¯
+@!CLIENT NAME ç»™è¿æ¥å®¢æˆ·ç«¯å‘½å è®¾ç½®ä¸ºè´¦å·åç§°
+@!CLIENT LOGIN å®¢æˆ·ç«¯ç™»å½• ç”¨æˆ·å+å¯†ç 
+@!CLIENT LOGIN_EX ç”¨æˆ·å+ä¼šè¯å·
+@!CLIENT SU æƒé™æå‡
 
-@!CLIENT PROXY ¿Í»§¶Ë»»ĞÂµÄÄ¿±ê Èç¹ûºóÃæÃ»ÓĞ²ÎÊı µ±Ç°Èç¹ûÓĞÁ¬½ÓÄ¿±ê½«¹Ø±Õ
+@!CLIENT PROXY å®¢æˆ·ç«¯æ¢æ–°çš„ç›®æ ‡ å¦‚æœåé¢æ²¡æœ‰å‚æ•° å½“å‰å¦‚æœæœ‰è¿æ¥ç›®æ ‡å°†å…³é—­
 
 */
 
@@ -32,12 +32,13 @@ struct sx_cmd_t
 int mycmd_client_list(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
 /**
-ÈÃ¿Í»§¶ËÁ¬½Óµ½ÁíÍâÒ»¸ö·şÎñÉÏ
+è®©å®¢æˆ·ç«¯è¿æ¥åˆ°å¦å¤–ä¸€ä¸ªæœåŠ¡ä¸Š
 */
 int mycmd_client_proxy(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
 int mycmd_system_helo(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 int mycmd_system_help(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
+int mycmd_system_shoutdown(CxMyClient* cli, const char* buf, int size, XTokenizer* tok);
 
 extern struct sx_cmd_t mycmds[];
 extern unsigned int mycmds_count;

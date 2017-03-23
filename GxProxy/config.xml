@@ -1,16 +1,28 @@
 <xml>
 	<server>
-
-		<ip>192.168.50.83</ip>
+		<ip>0.0.0.0</ip>
 		<port>4545</port>
-
+    <type>0</type>
 	</server>
 
+  <ssl>
+  </ssl>
+
+  <auth>
+    <enable>0</enable>
+  
+  </auth>
+    
 	<database>
 		<type>MySQL</type>
 		<server>192.168.50.96</server>
 		<port>3306</port>
 	</database>
 
+  <client>
+    <init>1024</init>
+    <breakhart>0</breakhart>
+  
+  </client>
 
 </xml>

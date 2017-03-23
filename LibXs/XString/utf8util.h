@@ -1,4 +1,4 @@
-
+﻿
 #ifndef utf8util_h__
 #define utf8util_h__
 

@@ -1,8 +1,8 @@
-#ifndef myClient_h__
+ï»¿#ifndef myClient_h__
 #define myClient_h__
 
 /*
-¿Í»§¶ËÁ¬½ÓÉÏÀ´ºóµÈ´ıÑéÖ¤
+å®¢æˆ·ç«¯è¿æ¥ä¸Šæ¥åç­‰å¾…éªŒè¯
 */
 
 #include "Singleton.h"
@@ -14,17 +14,6 @@
 class CxTcpClient;
 class CxMyClient;
 
-typedef struct {
-	uv_tcp_t handle;
-	uv_shutdown_t shutdown_req;
-	CxMyClient* client;
-} conn_rec;
-
-typedef struct {
-	uv_write_t req;
-	uv_buf_t buf;
-	CxMyClient* client;
-} write_req_t;
 
 
 class CxTcpDelegate
@@ -39,10 +28,8 @@ public:
 class CxTcpClient
 {
 public:
-
-
-public:
 	CxTcpClient();
+	virtual ~CxTcpClient();
 
 	virtual int Open(sockaddr_in _addr);
 	virtual void Close();
@@ -64,18 +51,21 @@ protected:
 	int64 m_socket;
 	CxNetBuffer m_input;
 
-	//0 Ç°Ãæ¼Ó32µÄ³¤¶È 1ºóÃæ¼Ó½áÊø·û
+	//0 å‰é¢åŠ 32çš„é•¿åº¦ 1åé¢åŠ ç»“æŸç¬¦
 	int pto_type;
+
+
 
 public:
 
 	std::string m_name;
 	struct sockaddr_in peer;
 
-	int64 m_tiBirth; //Á¬½ÓÉÏÀ´µÄÊ±¼ä
-	int64 m_tiBreak; //ĞÄÌøµÄ×îºóÊ±¼ä ¸ù¾İÕâ¸öÀ´ÅĞ¶Ï¿Í»§¶ËÊÇ·ñ»¹ÔÚÏß
+	int64 m_tiBirth; //è¿æ¥ä¸Šæ¥çš„æ—¶é—´
+	int64 m_tiBreak; //å¿ƒè·³çš„æœ€åæ—¶é—´ æ ¹æ®è¿™ä¸ªæ¥åˆ¤æ–­å®¢æˆ·ç«¯æ˜¯å¦è¿˜åœ¨çº¿
+	
+	char m_recv_buf[40960]; //ç”¨æ¥å½“æ•°æ®æ¥çš„æ—¶å€™ä¿å­˜ç”¨
 
-//	char  recvBuffer[65535]; //ÓÃÀ´µ±Êı¾İÀ´µÄÊ±ºò±£´æÓÃ
 private:
 	
 };
@@ -92,12 +82,14 @@ public:
 	enum CLI_STATE
 	{
 		CTT_NEW,
-		CTT_TLS,	//¼ÓÃÜÎÕÊÖ
-		CTT_AUTH,	//ÒÑ¾­Í¨¹ıÑéÖ¤ÁË
+		CTT_TLS,	//åŠ å¯†æ¡æ‰‹
+		CTT_AUTH,	//å·²ç»é€šè¿‡éªŒè¯äº†
 	};
 
 public:
 	CxMyClient();
+	virtual ~CxMyClient();
+
 	void Reset();
 
 	virtual int Open(sockaddr_in _addr);
@@ -106,16 +98,20 @@ public:
 	void Accept();
 
 	virtual int Send(const char* buf, int size);
+	virtual void SetFD(int64 fd);
 
-	//void OnRecvFromClient(const char* buf, int size);
 
 	/**
-	Á¬½Ó´úÀíµ½Ò»¸öÄ¿±ê
+	è¿æ¥ä»£ç†åˆ°ä¸€ä¸ªç›®æ ‡
 	*/
 	//void SetProxyTarget(sockaddr_in _addr);
 
 	void Decrypto(char* buf, int size);
 	void Encrypto(char* buf, int size);
+public:
+//	static void shutdown_cb(uv_shutdown_t* req, int status);
+//	static void close_cb(uv_handle_t* handle);
+	static void write_cb(uv_write_t* req, int status);
 
 public:
 	virtual void OnTcpSend(CxTcpClient* sender, const char* buf, int size);
@@ -125,13 +121,13 @@ public:
 
 public:
 	/**
-	ÉèÖÃĞÂµÄÍ¨ĞÅ¼Ó/½âÃÜÔ¿
+	è®¾ç½®æ–°çš„é€šä¿¡åŠ /è§£å¯†é’¥
 	*/
 	void SetCryptoKey(std::string _key);
 
 protected:
 
-	//¼ÓÃÜÎÕÊÖ Í¨¹ıÑéÖ¤ ¿ªÊ¼Õı³£
+	//åŠ å¯†æ¡æ‰‹ é€šè¿‡éªŒè¯ å¼€å§‹æ­£å¸¸
 	int m_nState;
 	bool m_bSSL;
 
@@ -139,13 +135,14 @@ protected:
 
 
 public:
-	uv_tcp_t* handle;
-	CxTcpClient* m_proxy;	//ºÍÄÄ¸ö´úÀíÁ´½Ó
-	sockaddr_in m_proxy_addr; //Ä¿±ê·şÎñµÄµØÖ·
+	uv_tcp_t*  handle;
+	CxTcpClient* m_proxy;	//å’Œå“ªä¸ªä»£ç†é“¾æ¥
+	sockaddr_in m_proxy_addr; //ç›®æ ‡æœåŠ¡çš„åœ°å€
 
-	int m_iPrivilege;  //È¨ÏŞ
+	int m_iPrivilege;  //æƒé™
+//	conn_rec* conn;
 
-
+//	char m_input_buf[40960];
 
 private:
 	std::string m_sCryptoKeyOld;
@@ -153,13 +150,28 @@ private:
 
 };
 
+
+typedef struct {
+	uv_tcp_t handle;
+	uv_shutdown_t shutdown_req;
+	CxMyClient client;
+} conn_rec;
+
+typedef struct {
+	uv_write_t req;
+	uv_buf_t buf;
+	CxMyClient* client;
+} write_req_t;
+
+
+
 #pragma mark - 
 //////////////////////////////////////////////////////////////////////////
 //
 //////////////////////////////////////////////////////////////////////////
 
 /**
-¹ÜÀí¿Í»§¶ËÁ¬½Ó
+ç®¡ç†å®¢æˆ·ç«¯è¿æ¥
 */
 class CxMyClientPool : public Singleton<CxMyClientPool>
 {
@@ -170,7 +182,11 @@ public:
 
 
 public:
-	//CxSafeVector<CxMyClient*>	clients; //ºóĞøĞŞ¸Ä
+
+	CxSafeVector<conn_rec*>	clients; //é‡ç”¨
+
+	conn_rec* NewConn();
+	void DeleteConn(conn_rec*);
 
 	CxSafeMap<int64, CxMyClient*> fd_clients;
 
@@ -179,6 +195,8 @@ public:
 	void Step();
 
 	CxMyClient* findClientByFD(int64 fd,bool _create);
+	void DisconnectAll();
+
 
 	time_t m_last_check_time;
 

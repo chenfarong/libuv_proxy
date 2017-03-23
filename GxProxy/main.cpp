@@ -1,7 +1,7 @@
-
+ï»¿
 /*
 
-ÔÊĞí 2ÖÖ 1=µ¥¶ÀÁ¬½Óµ½Ä¿±ê·şÎñÆ÷ 2=Í¨¹ı¹²ÏíÁ¬½Óµ½Ä¿±ê·şÎñÆ÷
+å…è®¸ 2ç§ 1=å•ç‹¬è¿æ¥åˆ°ç›®æ ‡æœåŠ¡å™¨ 2=é€šè¿‡å…±äº«è¿æ¥åˆ°ç›®æ ‡æœåŠ¡å™¨
 
 
 
@@ -9,9 +9,28 @@
 
 
 #include <iostream>
-//#include <vld.h>
+#ifdef __X86__
+#include <vld.h>
+#endif
 #include "GxProxy.h"
 
+#include "myDefine.h"
+
+#ifdef _MSC_VER
+#include "XServer/ServiceWin32.h"
+#define __WINDOWS__ 1
+#else
+#include "XServer/PosixDaemon.h"
+#endif
+
+/*
+* -1 - not in service mode
+*  0 - stopped
+*  1 - running
+*  2 - paused
+*/
+int App_ServiceStatus = -1;
+std::string myPidFile = "/var/tmp/gproxy_s"; //è¿™é‡Œæ³¨æ„æœ‰å¥½å¤šä¸ªä¸åŒçš„æ¸¸æˆæœåŠ¡å™¨
 
 int proc_configure(int argc, const char** argv)
 {
@@ -26,18 +45,59 @@ int proc_configure(int argc, const char** argv)
 	return 0;
 }
 
+/**
+ä¸ºWindows Service æä¾›å…¥å£
+*/
+int main_server()
+{
+	CxMyService::OnStart();
+	CxMyServer::Instance()->Run();
+	CxMyService::OnStop();
+	return 0;
+}
 
 
 int main(int argc,const char** argv)
 {
 
-	//std::cout << "Hello World" << std::endl;
 
-	CxMyClientPool::Instance()->Init(1024);
+//#ifdef _DEBUG
+	main_server();
+	return 0;
+//#endif
 
-	CxMyServer::Instance()->Listen("0.0.0.0", 8000);
 
-	CxMyServer::Instance()->Run();
+#ifdef __WINDOWS__
+	ServiceMainProc(argc, argv);
+	return 0;
+#else
+
+	bool bDaemon = false;
+	for (int i = 0; i < argc; i++)
+	{
+		if (0 == strcmp(argv[i], "-d")) {
+			bDaemon = true;
+		}
+
+		if (0 == strcmp(argv[i], "-stop")) {
+			stopDaemon(myPidFile.c_str());
+			//detachDaemon();
+			exit(0);
+		}
+
+	}
+
+
+	if (bDaemon) {
+		startDaemon(myPidFile.c_str());
+	}
+
+
+	//CreatePIDFile(myPidFile);
+	main_server();
+
+#endif
+
 
 	return 0;
 }

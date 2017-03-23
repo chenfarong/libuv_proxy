@@ -15,6 +15,7 @@
 #include "xnet.h"
 
 typedef int64_t int64;
+typedef uint64_t uint64;
 
 class XsTcpClient;
 
@@ -41,6 +42,8 @@ public:
 
 public:
 	XsTcpClient();
+
+	void Reset();
 
 	int Connect(const char* _server, int _service);
 	void Disconnect();
@@ -74,13 +77,26 @@ public:
 
 	virtual void Recv(const char* buf, int size);
 
+	uint64 GetSendBytes() { return m_send_bytes; }
+	uint64 GetRecvBytes() { return m_recv_bytes; }
+	uint64 GetSendTick() { return m_send_tick; }
+	uint64 GetRecvTick() { return m_recv_tick; }
+
 protected:
 	int m_pto_type;
 	int64 m_socket;
 	XsTcpClientDelegate* m_delegate;
 
+	bool m_connected;
+
 	CxNetBuffer m_input;
 	xnet_sock sk;
+
+	uint64	
+		m_send_bytes,	//发送多少字节
+		m_recv_bytes,	//接收多少字节
+		m_send_tick,	//发送多少个包
+		m_recv_tick;	//接收多少个包
 
 private:
 	char m_buffer[4096];
